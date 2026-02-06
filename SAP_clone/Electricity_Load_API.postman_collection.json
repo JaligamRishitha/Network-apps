@@ -1,0 +1,182 @@
+{
+  "info": {
+    "name": "Electricity Load Request API",
+    "description": "MuleSoft integration endpoints for electricity load enhancement requests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "JSON - Small Load Increase",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"RequestID\": \"SF-REQ-10021\",\n  \"CustomerID\": \"CUST-88991\",\n  \"CurrentLoad\": 5,\n  \"RequestedLoad\": 10,\n  \"ConnectionType\": \"RESIDENTIAL\",\n  \"City\": \"Hyderabad\",\n  \"PinCode\": \"500081\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/integration/mulesoft/load-request",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "integration", "mulesoft", "load-request"]
+        },
+        "description": "Small load increase (5kW to 10kW) - Creates PM and FI tickets"
+      },
+      "response": []
+    },
+    {
+      "name": "JSON - Large Load Increase",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"RequestID\": \"SF-REQ-10022\",\n  \"CustomerID\": \"CUST-88992\",\n  \"CurrentLoad\": 10,\n  \"RequestedLoad\": 30,\n  \"ConnectionType\": \"COMMERCIAL\",\n  \"City\": \"Bangalore\",\n  \"PinCode\": \"560001\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/integration/mulesoft/load-request",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "integration", "mulesoft", "load-request"]
+        },
+        "description": "Large load increase (10kW to 30kW) - Creates PM, FI, and MM tickets"
+      },
+      "response": []
+    },
+    {
+      "name": "JSON - Minimal Load Increase",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"RequestID\": \"SF-REQ-10023\",\n  \"CustomerID\": \"CUST-88993\",\n  \"CurrentLoad\": 3,\n  \"RequestedLoad\": 5,\n  \"ConnectionType\": \"RESIDENTIAL\",\n  \"City\": \"Mumbai\",\n  \"PinCode\": \"400001\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/integration/mulesoft/load-request",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "integration", "mulesoft", "load-request"]
+        },
+        "description": "Minimal load increase (3kW to 5kW) - Creates only PM ticket"
+      },
+      "response": []
+    },
+    {
+      "name": "XML - Residential Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/xml"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<ElectricityLoadRequest>\n    <RequestID>SF-REQ-10024</RequestID>\n    <CustomerID>CUST-88994</CustomerID>\n    <CurrentLoad>5</CurrentLoad>\n    <RequestedLoad>15</RequestedLoad>\n    <ConnectionType>RESIDENTIAL</ConnectionType>\n    <City>Delhi</City>\n    <PinCode>110001</PinCode>\n</ElectricityLoadRequest>"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/integration/mulesoft/load-request/xml",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "integration", "mulesoft", "load-request", "xml"]
+        },
+        "description": "XML format request for residential load enhancement"
+      },
+      "response": []
+    },
+    {
+      "name": "XML - Commercial Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/xml"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<ElectricityLoadRequest>\n    <RequestID>SF-REQ-10025</RequestID>\n    <CustomerID>CUST-88995</CustomerID>\n    <CurrentLoad>15</CurrentLoad>\n    <RequestedLoad>40</RequestedLoad>\n    <ConnectionType>COMMERCIAL</ConnectionType>\n    <City>Chennai</City>\n    <PinCode>600001</PinCode>\n</ElectricityLoadRequest>"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/integration/mulesoft/load-request/xml",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "integration", "mulesoft", "load-request", "xml"]
+        },
+        "description": "XML format request for commercial load enhancement"
+      },
+      "response": []
+    },
+    {
+      "name": "Get PM Tickets",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/v1/pm/tickets",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "v1", "pm", "tickets"]
+        },
+        "description": "View all PM tickets created from load requests"
+      },
+      "response": []
+    },
+    {
+      "name": "Get FI Tickets",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/v1/fi/tickets",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "v1", "fi", "tickets"]
+        },
+        "description": "View all FI tickets created from load requests"
+      },
+      "response": []
+    },
+    {
+      "name": "Get MM Tickets",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/v1/mm/tickets",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "v1", "mm", "tickets"]
+        },
+        "description": "View all MM tickets created from load requests"
+      },
+      "response": []
+    }
+  ]
+}

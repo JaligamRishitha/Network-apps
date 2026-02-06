@@ -1,0 +1,24 @@
+{
+  "name": "sap-clone",
+  "version": "1.0.0",
+  "description": "A comprehensive enterprise resource planning (ERP) demonstration application featuring authentic SAP Fiori and SAP GUI Classic design patterns. This system showcases three core SAP modules with full integration capabilities, event-driven architecture, and enterprise-grade observability.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saivaishnavthota/SAP_clone.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/saivaishnavthota/SAP_clone/issues"
+  },
+  "homepage": "https://github.com/saivaishnavthota/SAP_clone#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.1",
+    "playwright": "^1.58.1"
+  }
+}

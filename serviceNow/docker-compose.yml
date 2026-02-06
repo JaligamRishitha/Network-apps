@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: servicenow_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    ports:
+      - "8003:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/servicenow_db
+      SECRET_KEY: your-secret-key-change-in-production
+      # ServiceNow MCP Integration
+      SERVICENOW_INSTANCE: ${SERVICENOW_INSTANCE:-https://dev12345.service-now.com}
+      SERVICENOW_USER: ${SERVICENOW_USER:-admin}
+      SERVICENOW_PASSWORD: ${SERVICENOW_PASSWORD:-password}
+      SERVICENOW_TIMEOUT: ${SERVICENOW_TIMEOUT:-30.0}
+      # MuleSoft Integration
+      MULESOFT_BASE_URL: ${MULESOFT_BASE_URL:-http://host.docker.internal:4797}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_URL: http://localhost:8003
+        REACT_APP_MULESOFT_URL: http://localhost:4797
+    ports:
+      - "3003:3000"
+
+volumes:
+  postgres_data:

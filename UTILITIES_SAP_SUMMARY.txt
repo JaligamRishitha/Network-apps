@@ -1,0 +1,247 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║              SAP UTILITIES DATA - POWER & GAS NETWORKS                       ║
+║              (UKPN & SGN Style Operations)                                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+✅ OLD HVAC DATA DELETED - NEW UTILITIES DATA LOADED
+
+════════════════════════════════════════════════════════════════════════════════
+
+📊 MASTER DATA SUMMARY
+
+⚡ POWER NETWORK (UKPN-style) - 27 Materials
+   ════════════════════════════════════════════
+   Cables & Conductors:
+   • 11kV Underground Cable XLPE (5000m in stock)
+   • 33kV Underground Cable XLPE (3000m in stock)
+   • LV Underground Cable (8000m in stock)
+   • Overhead Line Conductors (6000m+ in stock)
+
+   Transformers & Distribution:
+   • Distribution Transformers 500kVA, 1000kVA (15-25 units)
+   • Ring Main Units 11kV (12 units)
+   • Circuit Breakers 11kV SF6 (20 units)
+
+   Switchgear & Protection:
+   • 11kV Switchgear Panels (8 units)
+   • Current & Voltage Transformers (50-40 units)
+   • Surge Arresters (60 units)
+
+   Poles & Infrastructure:
+   • Wooden/Steel/Concrete Poles (40-100 units)
+   • Cross Arms & Hardware (150-200 units)
+
+   Smart Metering:
+   • SMETS2 Electricity Meters Single/Three Phase (500-200 units)
+   • CT Metering Units (30 units)
+   • SCADA RTU Data Loggers (25 units)
+
+   Earthing & Safety:
+   • Earth Rods Copper Clad (300 units)
+   • Earth Conductors (2000m in stock)
+
+🔥 GAS NETWORK (SGN-style) - 27 Materials
+   ════════════════════════════════════════════
+   Pipes & Fittings:
+   • PE Pipe 180mm Gas Mains (4000m in stock)
+   • PE Pipe 125mm Gas Mains (6000m in stock)
+   • PE Pipe 63mm Service Pipe (8000m in stock)
+   • Steel Pipe 300mm (2000m in stock)
+   • Electrofusion Couplings & Tees (150-300 units)
+
+   Valves & Regulators:
+   • Gate Valves PE 180mm (30 units)
+   • Ball Valves PE 125mm (50 units)
+   • Service Valves 25mm (200 units)
+   • Pressure Regulators 2bar/75mbar (40 units)
+   • District Regulators 7bar/2bar (15 units)
+   • Emergency Control Valves (150 units)
+
+   Smart Metering:
+   • Smart Gas Meters G4/G6 Ultrasonic (400-200 units)
+   • Industrial Gas Meters (20 units)
+   • SCADA RTU for Gas Network (30 units)
+
+   Protection & Safety:
+   • Cathodic Protection Anodes (100 units)
+   • Gas Leak Detectors (40 units)
+   • Warning Marker Tape (500 rolls)
+   • Slam Shut Valves (15 units)
+   • Odorant Injection Pumps (10 units)
+
+   Installation:
+   • Service Connection Kits (100 units)
+   • Tapping Saddles (60 units)
+   • Repair Clamps (50 units)
+
+════════════════════════════════════════════════════════════════════════════════
+
+🏭 NETWORK INFRASTRUCTURE ASSETS - 22 Assets
+
+⚡ POWER NETWORK - 11 Assets
+   ════════════════════════════════════════════
+   Primary Substations (132kV/11kV):
+   ✓ SUB-LONDON-001: London Central (90MVA)
+   ✓ SUB-LONDON-002: Canary Wharf (60MVA)
+   ✓ SUB-SOUTH-001: Brighton (45MVA) - 132kV/33kV
+   ✓ SUB-EAST-001: Ipswich (30MVA)
+
+   Secondary Substations (11kV/415V):
+   ✓ SUB-LONDON-S001: Paddington (2x1000kVA)
+   ✓ SUB-LONDON-S002: Kings Cross (2x500kVA)
+   ✓ SUB-SOUTH-S001: Crawley (1x800kVA)
+   ✓ SUB-EAST-S001: Colchester (1x500kVA)
+   ✓ SUB-NORTH-S001: Luton (2x630kVA) - UNDER MAINTENANCE
+
+   Overhead Line Networks:
+   ✓ OHL-EAST-001: Rural East Anglia (45km 11kV)
+   ✓ OHL-SOUTH-001: Sussex Coast (11kV)
+
+🔥 GAS NETWORK - 11 Assets
+   ════════════════════════════════════════════
+   Offtake Stations (NTS to LDZ 7bar):
+   ✓ GAS-SCOT-001: Edinburgh North
+   ✓ GAS-SCOT-002: Glasgow West (with odorization)
+   ✓ GAS-SOUTH-001: Southampton (7bar to 2bar)
+
+   District Governors (2bar to 75mbar):
+   ✓ GAS-SCOT-R001: Edinburgh City Centre (8000m³/h)
+   ✓ GAS-SCOT-R002: Glasgow South (5000m³/h)
+   ✓ GAS-SOUTH-R001: Guildford (6000m³/h)
+   ✓ GAS-SOUTH-R002: Portsmouth (7000m³/h)
+
+   Pipeline Networks (Medium Pressure 2bar):
+   ✓ GAS-SCOT-P001: Edinburgh Ring (180mm PE, 28km)
+   ✓ GAS-SCOT-P002: Glasgow Grid (250mm PE, 42km)
+   ✓ GAS-SOUTH-P001: Hampshire (180mm PE, 35km)
+
+   Storage Facilities:
+   ✓ GAS-SCOT-STR001: Granton LNG Storage (50,000m³)
+
+════════════════════════════════════════════════════════════════════════════════
+
+💰 COST CENTERS - 7 Budget Centers
+
+   CC-UKPN-CAPEX    UKPN Capital Projects        £25,000,000  (£19,750,000 avail)
+   CC-UKPN-MAINT    UKPN Network Maintenance      £8,500,000  (£6,400,000 avail)
+   CC-UKPN-EMERG    UKPN Emergency Response       £3,500,000  (£2,625,000 avail)
+   CC-SGN-CAPEX     SGN Gas Infrastructure       £18,000,000  (£13,800,000 avail)
+   CC-SGN-MAINT     SGN Gas Maintenance           £6,500,000  (£4,875,000 avail)
+   CC-SGN-EMERG     SGN Gas Emergency             £4,000,000  (£3,050,000 avail)
+   CC-SMART-METER   Smart Meter Rollout          £12,000,000  (£8,400,000 avail)
+
+════════════════════════════════════════════════════════════════════════════════
+
+👷 ENGINEERS & TECHNICIANS - 14 Qualified Personnel
+
+⚡ Power Network Engineers (6):
+   201 Michael Thompson   HV AP, 11kV/33kV, NRSWA          Senior    London        ✅
+   202 Sarah Mitchell     HV AP, Substation Maintenance    Senior    South East    ✅
+   203 David Wilson       LV Auth, Cable Jointing          Mid       East Anglia   ✅
+   204 Emma Johnson       HV AP, Protection & Control      Senior    London        🔄 Busy
+   205 James Anderson     HV/LV, Overhead Lines            Mid       East Anglia   ✅
+   206 Rachel Brown       Smart Meter Installation         Junior    South East    ✅
+
+🔥 Gas Network Engineers (6):
+   207 Andrew MacDonald   Gas Construction, PE Fusion      Senior    Scotland      ✅
+   208 Fiona Campbell     Gas Emergency, Leak Detection    Senior    Scotland      ✅
+   209 Robert Stewart     Gas Maintenance, Pipeline Insp   Mid       Scotland      ✅
+   210 Jennifer Murray    Gas Service, Meter Install       Mid       South         ✅
+   211 Duncan Fraser      Gas Pressure Regulation          Senior    Scotland      🏖️ Leave
+   212 Lisa Robertson     Smart Gas Meter Installation     Junior    South         ✅
+
+🔧 Specialist Engineers (2):
+   213 Peter Collins      HV Protection, Relay Testing     Senior    London        ✅
+   214 Helen Watson       SCADA Systems, RTU Programming   Senior    Scotland      ✅
+
+════════════════════════════════════════════════════════════════════════════════
+
+🎯 TYPICAL USE CASES
+
+⚡ Power Network Scenarios:
+   1. Emergency power outage in London
+      → Need: 11kV cable, HV engineer
+      → Assign: Michael Thompson (HV AP, London)
+      → Budget: CC-UKPN-EMERG
+
+   2. Substation maintenance in Paddington
+      → Need: Transformer, circuit breaker, switchgear
+      → Assign: Sarah Mitchell (Substation specialist)
+      → Budget: CC-UKPN-MAINT
+
+   3. Smart meter installation rollout
+      → Need: SMETS2 meters
+      → Assign: Rachel Brown (Smart meter certified)
+      → Budget: CC-SMART-METER
+
+🔥 Gas Network Scenarios:
+   1. Gas leak emergency in Edinburgh
+      → Need: PE pipe, repair clamp, leak detector
+      → Assign: Fiona Campbell (Gas Emergency)
+      → Budget: CC-SGN-EMERG
+
+   2. New gas service connection in Glasgow
+      → Need: PE pipe 63mm, service valve, connection kit
+      → Assign: Andrew MacDonald (Gas Construction)
+      → Budget: CC-SGN-CAPEX
+
+   3. Pipeline pressure testing
+      → Need: Pressure recorder, CP testing equipment
+      → Assign: Robert Stewart (Pipeline inspection)
+      → Budget: CC-SGN-MAINT
+
+════════════════════════════════════════════════════════════════════════════════
+
+🔌 VALIDATION API
+
+   Base URL: http://localhost:4798/api/appointments
+
+   Test Power Network:
+   curl -X POST http://localhost:4798/api/appointments/validate \
+     -H "Content-Type: application/json" \
+     -d '{
+       "required_parts": "11kV cable, Ring Main Unit",
+       "required_skills": "HV Authorised Person, 11kV",
+       "location": "London",
+       "cost_center_id": "CC-UKPN-EMERG",
+       "estimated_cost": 25000.00
+     }'
+
+   Test Gas Network:
+   curl -X POST http://localhost:4798/api/appointments/validate \
+     -H "Content-Type: application/json" \
+     -d '{
+       "required_parts": "PE Pipe, Service Valve",
+       "required_skills": "Gas Emergency Engineer, Leak Detection",
+       "location": "Edinburgh",
+       "cost_center_id": "CC-SGN-EMERG",
+       "estimated_cost": 15000.00
+     }'
+
+════════════════════════════════════════════════════════════════════════════════
+
+📂 FILES
+
+   ✓ /home/pradeep1a/Network-apps/SAP_clone/seed_utilities_data.py
+     → Utilities data seeding script
+
+   ✓ /home/pradeep1a/Network-apps/UTILITIES_SAP_DATA_GUIDE.md
+     → Complete utilities documentation
+
+   ✓ /home/pradeep1a/Network-apps/UTILITIES_SAP_SUMMARY.txt (this file)
+     → Quick reference
+
+   ✓ Validation API still works at:
+     http://localhost:4798/api/appointments/*
+
+════════════════════════════════════════════════════════════════════════════════
+
+🎉 READY FOR UTILITIES OPERATIONS!
+
+   Your SAP system now contains realistic UK utilities data for:
+   ⚡ Electricity distribution network operations (UKPN-style)
+   🔥 Gas distribution network operations (SGN-style)
+
+   All appointment validation APIs work with utilities context!
+
+════════════════════════════════════════════════════════════════════════════════

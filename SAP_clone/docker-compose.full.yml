@@ -1,0 +1,207 @@
+# Full docker-compose with all optional services
+# Use: docker-compose -f docker-compose.full.yml up
+# Or keep using the current docker-compose.yml
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: sap-erp-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sapuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sappassword}
+      POSTGRES_DB: ${POSTGRES_DB:-saperp}
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sapuser} -d ${POSTGRES_DB:-saperp}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sap-erp-backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-sapuser}:${POSTGRES_PASSWORD:-sappassword}@postgres:5432/${POSTGRES_DB:-saperp}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      CAMEL_WEBHOOK_URL: http://camel:8181/webhook
+      PYTHONPATH: /
+    ports:
+      - "2004:8000"
+    volumes:
+      - ./backend:/app/backend
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sap-erp-frontend
+    ports:
+      - "2003:2003"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:2004/api/v1
+
+  # ============================================
+  # OPTIONAL SERVICES (comment out if not needed)
+  # ============================================
+
+  # Kong API Gateway (optional - for API routing/rate limiting)
+  kong:
+    image: kong:3.4
+    container_name: sap-erp-kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    ports:
+      - "8180:8000"
+      - "8543:8443"
+      - "8101:8001"
+    volumes:
+      - ./kong:/kong
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - full
+      - gateway
+
+  # Apache Camel Integration (optional - for electricity load integration)
+  camel:
+    build:
+      context: ./camel
+      dockerfile: Dockerfile
+    container_name: sap-erp-camel
+    ports:
+      - "8181:8081"
+    environment:
+      ITSM_MOCK_URL: http://itsm-mock:8082
+      ERP_MOCK_URL: http://erp-mock:8083
+      CRM_MOCK_URL: http://crm-mock:8084
+    depends_on:
+      - itsm-mock
+      - erp-mock
+      - crm-mock
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - full
+      - integration
+
+  # Mock Services (optional - only for camel integration)
+  itsm-mock:
+    build:
+      context: ./mocks/itsm
+      dockerfile: Dockerfile
+    container_name: sap-erp-itsm-mock
+    ports:
+      - "8182:8082"
+    profiles:
+      - full
+      - integration
+
+  erp-mock:
+    build:
+      context: ./mocks/erp
+      dockerfile: Dockerfile
+    container_name: sap-erp-erp-mock
+    ports:
+      - "8183:8083"
+    profiles:
+      - full
+      - integration
+
+  crm-mock:
+    build:
+      context: ./mocks/crm
+      dockerfile: Dockerfile
+    container_name: sap-erp-crm-mock
+    ports:
+      - "8184:8084"
+    profiles:
+      - full
+      - integration
+
+  # Prometheus Monitoring (optional - for metrics)
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: sap-erp-prometheus
+    ports:
+      - "9190:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - full
+      - monitoring
+
+  # Grafana Dashboard (optional - for metrics visualization)
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: sap-erp-grafana
+    ports:
+      - "3011:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - full
+      - monitoring
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:

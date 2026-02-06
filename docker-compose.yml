@@ -1,0 +1,196 @@
+version: '3.8'
+
+services:
+  # =============================================================================
+  # DATABASE SERVICES
+  # =============================================================================
+
+  # Salesforce Database
+  postgres-salesforce:
+    image: postgres:16-alpine
+    container_name: postgres-salesforce
+    ports:
+      - "4791:5432"
+    environment:
+      POSTGRES_USER: salesforce
+      POSTGRES_PASSWORD: salesforce_secret
+      POSTGRES_DB: salesforce_crm
+    volumes:
+      - postgres_salesforce_data:/var/lib/postgresql/data
+      - ./Salesforce/database/salesforce/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U salesforce -d salesforce_crm"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  # MuleSoft Database
+  postgres-mulesoft:
+    image: postgres:16-alpine
+    container_name: postgres-mulesoft
+    ports:
+      - "4792:5432"
+    environment:
+      POSTGRES_USER: mulesoft
+      POSTGRES_PASSWORD: mulesoft_secret
+      POSTGRES_DB: mulesoft_integration
+    volumes:
+      - postgres_mulesoft_data:/var/lib/postgresql/data
+      - ./Salesforce/database/mulesoft/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mulesoft -d mulesoft_integration"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  # ServiceNow Database
+  postgres-servicenow:
+    image: postgres:15-alpine
+    container_name: postgres-servicenow
+    ports:
+      - "4793:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: servicenow_db
+    volumes:
+      - postgres_servicenow_data:/var/lib/postgresql/data
+      - ./Salesforce/database/servicenow/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U servicenow -d servicenow_itsm"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  # SAP Database
+  postgres-sap:
+    image: postgres:16-alpine
+    container_name: postgres-sap
+    ports:
+      - "4794:5432"
+    environment:
+      POSTGRES_USER: sap
+      POSTGRES_PASSWORD: sap_secret
+      POSTGRES_DB: sap_erp
+    volumes:
+      - postgres_sap_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sap -d sap_erp"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  # =============================================================================
+  # APPLICATION SERVICES
+  # =============================================================================
+
+  # Salesforce Backend
+  salesforce-backend:
+    build:
+      context: ./Salesforce/backend
+      dockerfile: Dockerfile
+    container_name: salesforce-backend
+    ports:
+      - "4799:8000"
+    environment:
+      DATABASE_URL: postgresql://salesforce:salesforce_secret@postgres-salesforce:5432/salesforce_crm
+      SECRET_KEY: your-secret-key-change-in-production
+      MULESOFT_BASE_URL: http://mulesoft-backend:4797
+      MULESOFT_ACCOUNT_REQUEST_PATH: /
+      MULESOFT_TIMEOUT_SECONDS: 10
+      MULESOFT_SHARED_SECRET: mulesoft-salesforce-shared-secret-2024
+      SERVICENOW_BACKEND_URL: http://servicenow-backend:4780
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  # MuleSoft Backend
+  mulesoft-backend:
+    build:
+      context: ./Mulesoft-Application/Inte-platform/platform-backend
+      dockerfile: Dockerfile
+    container_name: mulesoft-backend
+    ports:
+      - "4797:4797"
+    environment:
+      DATABASE_URL: postgresql://mulesoft:mulesoft_secret@postgres-mulesoft:5432/mulesoft_integration
+      SALESFORCE_URL: http://salesforce-backend:8000
+      SAP_URL: http://sap-backend:4798
+      SERVICENOW_URL: http://servicenow-backend:4780
+      MULESOFT_SHARED_SECRET: mulesoft-salesforce-shared-secret-2024
+    depends_on:
+      postgres-mulesoft:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  # SAP Backend
+  sap-backend:
+    build:
+      context: ./SAP_clone/backend
+      dockerfile: Dockerfile
+    container_name: sap-backend
+    ports:
+      - "4798:4798"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://sap:sap_secret@postgres-sap:5432/sap_erp
+      MULESOFT_URL: http://mulesoft-backend:4797
+    depends_on:
+      postgres-sap:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  # ServiceNow Backend
+  servicenow-backend:
+    build:
+      context: ./serviceNow/backend
+      dockerfile: Dockerfile
+    container_name: servicenow-backend
+    ports:
+      - "4780:4780"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres-servicenow:5432/servicenow_db
+      MULESOFT_URL: http://mulesoft-backend:4797
+    depends_on:
+      postgres-servicenow:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  postgres_salesforce_data:
+  postgres_mulesoft_data:
+  postgres_servicenow_data:
+  postgres_sap_data:
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  shared-network:
+    driver: bridge
+    name: shared-network

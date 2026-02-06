@@ -1,0 +1,153 @@
+DATABASE MIGRATION FILES - COMPLETE TREE STRUCTURE
+═══════════════════════════════════════════════════════════════════════
+
+Network-apps/
+│
+├── 📄 run_all_migrations.py ...................... Master migration orchestrator (NEW)
+├── 📄 DATABASE_MIGRATIONS_README.md .............. Complete documentation (NEW)
+├── 📄 MIGRATION_QUICK_REFERENCE.md ............... Quick command reference (NEW)
+├── 📄 MIGRATION_SUMMARY.md ....................... Project summary (NEW)
+├── 📄 MIGRATION_FILES_TREE.txt ................... This file (NEW)
+│
+├── 📁 SAP_clone/
+│   └── 📁 backend/
+│       ├── 📄 alembic.ini ........................ Alembic config (existing)
+│       ├── 📄 run_migrations.py .................. Migration runner (existing)
+│       └── 📁 alembic/
+│           ├── 📄 env.py ......................... Environment setup (existing)
+│           ├── 📄 script.py.mako ................ Template (existing)
+│           └── 📁 versions/
+│               ├── 📄 001_create_schemas.py ...... Existing
+│               ├── 📄 002_create_tickets_table.py  Existing
+│               ├── 📄 003_create_pm_tables.py .... Existing
+│               ├── 📄 004_create_mm_tables.py .... Existing
+│               ├── 📄 005_create_fi_tables.py .... Existing
+│               ├── 📄 006_seed_mock_data.py ...... Existing
+│               ├── 📄 007_create_pm_workflow_tables.py  Existing
+│               ├── 📄 008_create_work_order_flow_tables.py  Existing
+│               └── 📄 009_add_password_reset_tickets.py .... NEW ✨
+│                   └── Creates: password_reset_tickets table
+│                   └── Adds: Indexes for performance
+│                   └── Purpose: ServiceNow integration workflow
+│
+├── 📁 Mulesoft-Application/
+│   └── 📁 Inte-platform/
+│       └── 📁 platform-backend/
+│           ├── 📄 alembic.ini .................... Alembic config (NEW) ✨
+│           ├── 📄 run_migrations.py .............. Migration runner (NEW) ✨
+│           └── 📁 alembic/ ....................... NEW directory ✨
+│               ├── 📄 env.py ..................... Environment setup (NEW) ✨
+│               ├── 📄 script.py.mako ............ Template (NEW) ✨
+│               └── 📁 versions/
+│                   └── 📄 001_initial_migration.py  Complete schema (NEW) ✨
+│                       └── Creates 9 tables:
+│                           ├── users (with roles)
+│                           ├── integrations
+│                           ├── integration_logs
+│                           ├── api_endpoints
+│                           ├── api_keys
+│                           ├── connectors
+│                           ├── salesforce_cases
+│                           ├── password_reset_tickets
+│                           └── user_creation_approvals
+│
+├── 📁 serviceNow/
+│   └── 📁 backend/
+│       ├── 📄 alembic.ini ........................ Alembic config (NEW) ✨
+│       ├── 📄 run_migrations.py .................. Migration runner (NEW) ✨
+│       └── 📁 alembic/ ........................... NEW directory ✨
+│           ├── 📄 env.py ......................... Environment setup (NEW) ✨
+│           ├── 📄 script.py.mako ................ Template (NEW) ✨
+│           └── 📁 versions/
+│               └── 📄 001_initial_migration.py .... Complete schema (NEW) ✨
+│                   └── Creates 13 tables:
+│                       ├── users (admin/agent/user)
+│                       ├── incidents
+│                       ├── service_catalog_items
+│                       ├── knowledge_articles
+│                       ├── tickets (main)
+│                       ├── approvals
+│                       ├── assignment_groups
+│                       ├── assignment_group_members
+│                       ├── category_assignment_mappings
+│                       ├── sla_definitions
+│                       ├── ticket_slas
+│                       └── notifications
+│
+└── 📁 Salesforce/
+    └── 📁 backend/
+        └── 📁 migrations/
+            ├── 📄 README.md ...................... SQL migration docs (NEW) ✨
+            ├── 📄 add_service_scenarios.sql ...... Existing SQL
+            └── 📄 add_service_and_fix_accounts.sql  Existing SQL
+
+═══════════════════════════════════════════════════════════════════════
+
+SUMMARY OF NEW FILES CREATED
+═══════════════════════════════════════════════════════════════════════
+
+Root Level (4 files):
+  ✅ run_all_migrations.py
+  ✅ DATABASE_MIGRATIONS_README.md
+  ✅ MIGRATION_QUICK_REFERENCE.md
+  ✅ MIGRATION_SUMMARY.md
+  ✅ MIGRATION_FILES_TREE.txt
+
+SAP Clone (1 file):
+  ✅ alembic/versions/009_add_password_reset_tickets.py
+
+Mulesoft (5 files):
+  ✅ alembic.ini
+  ✅ run_migrations.py
+  ✅ alembic/env.py
+  ✅ alembic/script.py.mako
+  ✅ alembic/versions/001_initial_migration.py
+
+ServiceNow (5 files):
+  ✅ alembic.ini
+  ✅ run_migrations.py
+  ✅ alembic/env.py
+  ✅ alembic/script.py.mako
+  ✅ alembic/versions/001_initial_migration.py
+
+Salesforce (1 file):
+  ✅ migrations/README.md
+
+TOTAL NEW FILES: 17
+
+═══════════════════════════════════════════════════════════════════════
+
+QUICK START
+═══════════════════════════════════════════════════════════════════════
+
+Run all migrations:
+  $ cd /home/pradeep1a/Network-apps
+  $ python3 run_all_migrations.py
+
+Run individual application:
+  $ cd <app-backend-directory>
+  $ python3 run_migrations.py
+
+Check status:
+  $ cd <app-backend-directory>
+  $ alembic current
+
+Full documentation:
+  $ cat DATABASE_MIGRATIONS_README.md
+
+Quick reference:
+  $ cat MIGRATION_QUICK_REFERENCE.md
+
+═══════════════════════════════════════════════════════════════════════
+
+DATABASES
+═══════════════════════════════════════════════════════════════════════
+
+Application      | Database Type | Tables | Status
+─────────────────┼───────────────┼────────┼─────────
+SAP Clone        | PostgreSQL    | 20+    | ✅ Ready
+Mulesoft         | SQLite        | 9      | ✅ Ready
+ServiceNow       | SQLite        | 13     | ✅ Ready
+Salesforce       | SQLite        | N/A    | ℹ️ SQL
+
+═══════════════════════════════════════════════════════════════════════

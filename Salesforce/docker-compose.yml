@@ -1,0 +1,160 @@
+version: '3.8'
+
+services:
+  # =============================================================================
+  # DATABASE SERVICES
+  # =============================================================================
+
+  # Salesforce CRM Database
+  salesforce-db:
+    image: postgres:16-alpine
+    container_name: salesforce-db
+    ports:
+      - "4791:5432"
+    environment:
+      POSTGRES_USER: salesforce
+      POSTGRES_PASSWORD: ${SALESFORCE_DB_PASSWORD:-salesforce_secret}
+      POSTGRES_DB: salesforce_crm
+    volumes:
+      - salesforce_db_data:/var/lib/postgresql/data
+      - ./database/salesforce/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U salesforce -d salesforce_crm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # MuleSoft Integration Database
+  mulesoft-db:
+    image: postgres:16-alpine
+    container_name: mulesoft-db
+    ports:
+      - "4792:5432"
+    environment:
+      POSTGRES_USER: mulesoft
+      POSTGRES_PASSWORD: ${MULESOFT_DB_PASSWORD:-mulesoft_secret}
+      POSTGRES_DB: mulesoft_integration
+    volumes:
+      - mulesoft_db_data:/var/lib/postgresql/data
+      - ./database/mulesoft/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mulesoft -d mulesoft_integration"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # ServiceNow Integration Database
+  servicenow-db:
+    image: postgres:16-alpine
+    container_name: servicenow-db
+    ports:
+      - "4793:5432"
+    environment:
+      POSTGRES_USER: servicenow
+      POSTGRES_PASSWORD: ${SERVICENOW_DB_PASSWORD:-servicenow_secret}
+      POSTGRES_DB: servicenow_itsm
+    volumes:
+      - servicenow_db_data:/var/lib/postgresql/data
+      - ./database/servicenow/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U servicenow -d servicenow_itsm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # =============================================================================
+  # APPLICATION SERVICES
+  # =============================================================================
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesforce-backend
+    ports:
+      - "4799:8000"
+    volumes:
+      - ./backend/data:/app/data
+    environment:
+      - DATABASE_URL=postgresql://salesforce:${SALESFORCE_DB_PASSWORD:-salesforce_secret}@salesforce-db:5432/salesforce_crm
+      - MULESOFT_DB_URL=postgresql://mulesoft:${MULESOFT_DB_PASSWORD:-mulesoft_secret}@mulesoft-db:5432/mulesoft_integration
+      - SERVICENOW_DB_URL=postgresql://servicenow:${SERVICENOW_DB_PASSWORD:-servicenow_secret}@servicenow-db:5432/servicenow_itsm
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - MULESOFT_BASE_URL=http://149.102.158.71:4799
+      - MULESOFT_ACCOUNT_REQUEST_PATH=/
+      - MULESOFT_TIMEOUT_SECONDS=10
+      - MULESOFT_SHARED_SECRET=dev-mulesoft-secret
+    depends_on:
+      salesforce-db:
+        condition: service_healthy
+      mulesoft-db:
+        condition: service_healthy
+      servicenow-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: salesforce-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Development only - seed the database
+  seed:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesforce-seed
+    command: python seed.py
+    volumes:
+      - ./backend/data:/app/data
+    environment:
+      - DATABASE_URL=postgresql://salesforce:${SALESFORCE_DB_PASSWORD:-salesforce_secret}@salesforce-db:5432/salesforce_crm
+    depends_on:
+      salesforce-db:
+        condition: service_healthy
+    profiles:
+      - seed
+    networks:
+      - app-network
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  salesforce_db_data:
+    driver: local
+  mulesoft_db_data:
+    driver: local
+  servicenow_db_data:
+    driver: local
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  app-network:
+    driver: bridge

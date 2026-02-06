@@ -1,0 +1,465 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Grid,
+  Paper,
+  Typography,
+  Box,
+  Card,
+  CardContent,
+  Button,
+  Breadcrumbs,
+  Link,
+  LinearProgress,
+  Avatar,
+  Divider
+} from '@mui/material';
+import {
+  TrendingUp,
+  ReportProblem,
+  CheckCircle,
+  Schedule,
+  Assignment as TicketIcon,
+  Approval as ApprovalIcon,
+  MenuBook as KnowledgeIcon,
+  Build as ServiceIcon,
+  Dashboard as DashboardIcon,
+  ArrowForward as ArrowForwardIcon
+} from '@mui/icons-material';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from 'recharts';
+import { useAuth } from '../contexts/AuthContext';
+
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalIncidents: 0,
+    newIncidents: 0,
+    inProgressIncidents: 0,
+    resolvedIncidents: 0,
+    totalTickets: 0,
+    openTickets: 0,
+    pendingApprovals: 0,
+    resolvedTickets: 0
+  });
+  const [chartData, setChartData] = useState({
+    ticketTrends: [],
+    priorityDistribution: []
+  });
+
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+
+      // Use the optimized dashboard endpoint
+      const response = await fetch('http://localhost:8002/dashboard/stats', { headers });
+      const data = await response.json();
+
+      setStats(data.stats);
+      setChartData({
+        ticketTrends: data.ticketTrends,
+        priorityDistribution: data.priorityDistribution
+      });
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+      // Fallback to original method if new endpoint fails
+      try {
+        const [incidentsResponse, ticketsResponse, approvalsResponse] = await Promise.all([
+          fetch('http://localhost:8002/incidents/', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }),
+          fetch('http://localhost:8002/tickets/?my_tickets=true', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }),
+          fetch('http://localhost:8002/approvals/', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
+        ]);
+
+        const [incidentsData, ticketsData, approvalsData] = await Promise.all([
+          incidentsResponse.json(),
+          ticketsResponse.json(),
+          approvalsResponse.json()
+        ]);
+
+        // Calculate comprehensive stats
+        const stats = {
+          totalIncidents: incidentsData.length,
+          newIncidents: incidentsData.filter(i => i.status === 'new').length,
+          inProgressIncidents: incidentsData.filter(i => i.status === 'in_progress').length,
+          resolvedIncidents: incidentsData.filter(i => i.status === 'resolved').length,
+          totalTickets: ticketsData.length,
+          openTickets: ticketsData.filter(t => ['submitted', 'pending_approval', 'approved', 'in_progress'].includes(t.status)).length,
+          pendingApprovals: approvalsData.filter(a => a.status === 'pending').length,
+          resolvedTickets: ticketsData.filter(t => ['resolved', 'closed'].includes(t.status)).length
+        };
+        setStats(stats);
+
+        // Prepare chart data with optimized processing
+        const statusCounts = ticketsData.reduce((acc, ticket) => {
+          acc[ticket.status] = (acc[ticket.status] || 0) + 1;
+          return acc;
+        }, {});
+
+        const ticketTrends = [
+          { name: 'New', value: statusCounts.submitted || 0 },
+          { name: 'Pending Approval', value: statusCounts.pending_approval || 0 },
+          { name: 'Approved', value: statusCounts.approved || 0 },
+          { name: 'In Progress', value: statusCounts.in_progress || 0 },
+          { name: 'Resolved', value: statusCounts.resolved || 0 }
+        ];
+
+        const priorityCounts = [...incidentsData, ...ticketsData].reduce((acc, item) => {
+          acc[item.priority] = (acc[item.priority] || 0) + 1;
+          return acc;
+        }, {});
+
+        const priorityDistribution = [
+          { name: 'Critical', value: priorityCounts.critical || 0, color: '#f44336' },
+          { name: 'High', value: priorityCounts.high || 0, color: '#ff9800' },
+          { name: 'Medium', value: priorityCounts.medium || 0, color: '#2196f3' },
+          { name: 'Low', value: priorityCounts.low || 0, color: '#4caf50' }
+        ];
+
+        setChartData({ ticketTrends, priorityDistribution });
+      } catch (fallbackError) {
+        console.error('Fallback dashboard data fetch also failed:', fallbackError);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  const StatCard = ({ title, value, icon, color, onClick }) => (
+    <Card 
+      sx={{ 
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': onClick ? {
+          transform: 'translateY(-2px)',
+          boxShadow: 4,
+        } : {}
+      }}
+      onClick={onClick}
+    >
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Avatar sx={{ backgroundColor: color, mr: 2, width: 48, height: 48 }}>
+              {icon}
+            </Avatar>
+            <Box>
+              <Typography variant="h4" component="div" sx={{ fontWeight: 600, color: '#333' }}>
+                {value}
+              </Typography>
+              <Typography color="text.secondary" variant="body2">
+                {title}
+              </Typography>
+            </Box>
+          </Box>
+          {onClick && (
+            <ArrowForwardIcon sx={{ color: 'text.secondary' }} />
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <LinearProgress sx={{ mb: 2 }} />
+          <Typography>Loading dashboard...</Typography>
+        </Box>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
+      {/* Header */}
+      <Box sx={{ p: 3, backgroundColor: 'white', borderBottom: '1px solid #dee2e6' }}>
+        <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 2 }}>
+          <Link 
+            color="inherit" 
+            href="#" 
+            onClick={(e) => { e.preventDefault(); navigate('/'); }}
+            sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+          >
+            Home
+          </Link>
+          <Typography color="text.primary">Dashboard</Typography>
+        </Breadcrumbs>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <DashboardIcon sx={{ mr: 2, color: '#FF8C42', fontSize: 32 }} />
+          <Typography variant="h4" sx={{ color: '#333', fontWeight: 600 }}>
+            Welcome back, {user?.full_name || 'User'}
+          </Typography>
+        </Box>
+        
+        <Typography variant="body1" color="text.secondary">
+          Here's an overview of your ServiceNow activities and system status
+        </Typography>
+      </Box>
+
+      <Box sx={{ p: 3 }}>
+        {/* Main Stats Cards */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              title="Tickets"
+              value={stats.totalTickets}
+              icon={<TicketIcon />}
+              color="#FF8C42"
+              onClick={() => navigate('/my-tickets')}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              title="Open Tickets"
+              value={stats.openTickets}
+              icon={<Schedule />}
+              color="#8B1538"
+              onClick={() => navigate('/my-tickets')}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              title="Pending Approvals"
+              value={stats.pendingApprovals}
+              icon={<ApprovalIcon />}
+              color="#F7931E"
+              onClick={() => navigate('/my-tickets?tab=approvals')}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              title="Resolved Tickets"
+              value={stats.resolvedTickets}
+              icon={<CheckCircle />}
+              color="#4CAF50"
+              onClick={() => navigate('/my-tickets')}
+            />
+          </Grid>
+        </Grid>
+
+        {/* Secondary Stats - Incidents */}
+        <Typography variant="h5" sx={{ mb: 2, color: '#333', fontWeight: 600 }}>
+          System Overview
+        </Typography>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              title="Total Incidents"
+              value={stats.totalIncidents}
+              icon={<TrendingUp />}
+              color="#2196F3"
+              onClick={() => navigate('/incidents')}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              title="New Incidents"
+              value={stats.newIncidents}
+              icon={<ReportProblem />}
+              color="#f44336"
+              onClick={() => navigate('/incidents')}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              title="In Progress"
+              value={stats.inProgressIncidents}
+              icon={<Schedule />}
+              color="#ff9800"
+              onClick={() => navigate('/incidents')}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              title="Resolved"
+              value={stats.resolvedIncidents}
+              icon={<CheckCircle />}
+              color="#4caf50"
+              onClick={() => navigate('/incidents')}
+            />
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={3}>
+          {/* Ticket Status Trends Chart */}
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 3, height: '400px', display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" sx={{ color: '#8B1538', fontWeight: 600 }}>
+                  Ticket Status Distribution
+                </Typography>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              <Box sx={{ flexGrow: 1, width: '100%' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData.ticketTrends}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#fff', 
+                        border: '1px solid #FF8C42',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="value" 
+                      fill="#FF8C42"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
+            </Paper>
+          </Grid>
+
+          {/* Priority Distribution Pie Chart */}
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 3, height: '400px', display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" sx={{ color: '#8B1538', fontWeight: 600 }}>
+                  Priority Distribution
+                </Typography>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              <Box sx={{ flexGrow: 1, width: '100%' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData.priorityDistribution}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {chartData.priorityDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#fff', 
+                        border: '1px solid #FF8C42',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Legend 
+                      verticalAlign="bottom" 
+                      height={36}
+                      iconType="circle"
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Box>
+            </Paper>
+          </Grid>
+        </Grid>
+
+        {/* Quick Actions */}
+        <Paper sx={{ p: 3, mt: 3 }}>
+          <Typography variant="h6" sx={{ mb: 3, color: '#8B1538', fontWeight: 600 }}>
+            Quick Actions
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<TicketIcon />}
+                onClick={() => navigate('/')}
+                sx={{ 
+                  py: 2, 
+                  borderColor: '#FF8C42', 
+                  color: '#FF8C42',
+                  '&:hover': { backgroundColor: 'rgba(255,140,66,0.04)' }
+                }}
+              >
+                Create Service Request
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<ServiceIcon />}
+                onClick={() => navigate('/service-catalog')}
+                sx={{ 
+                  py: 2, 
+                  borderColor: '#FF8C42', 
+                  color: '#FF8C42',
+                  '&:hover': { backgroundColor: 'rgba(255,140,66,0.04)' }
+                }}
+              >
+                Browse Service Catalog
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<KnowledgeIcon />}
+                onClick={() => navigate('/knowledge-base')}
+                sx={{ 
+                  py: 2, 
+                  borderColor: '#FF8C42', 
+                  color: '#FF8C42',
+                  '&:hover': { backgroundColor: 'rgba(255,140,66,0.04)' }
+                }}
+              >
+                Search Knowledge Base
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<ReportProblem />}
+                onClick={() => navigate('/problem-report')}
+                sx={{ 
+                  py: 2, 
+                  borderColor: '#FF8C42', 
+                  color: '#FF8C42',
+                  '&:hover': { backgroundColor: 'rgba(255,140,66,0.04)' }
+                }}
+              >
+                Report Problem
+              </Button>
+            </Grid>
+          </Grid>
+        </Paper>
+      </Box>
+    </Box>
+  );
+};
+
+export default Dashboard;

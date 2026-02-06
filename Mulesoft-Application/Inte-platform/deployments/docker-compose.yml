@@ -1,0 +1,147 @@
+services:
+  # Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: openpoint
+      POSTGRES_USER: openpoint
+      POSTGRES_PASSWORD: openpoint123
+    ports:
+      - "9888:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - openpoint-network
+
+  # MCP Server (MuleSoft Integration API)
+  mcp-server:
+    build: ../mcp-server
+    ports:
+      - "8090:8090"
+    networks:
+      - openpoint-network
+
+  # UI Dashboard
+  ui-dashboard:
+    build: ../ui-dashboard
+    ports:
+      - "3001:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - mcp-server
+    networks:
+      - openpoint-network
+
+  # Platform Backend (Python/FastAPI)
+  platform-backend:
+    build: ../platform-backend
+    ports:
+      - "4797:4797"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      DATABASE_URL: postgresql://openpoint:openpoint123@postgres:5432/openpoint
+      JWT_SECRET: openpoint-secret-key-change-in-production
+    depends_on:
+      - postgres
+    networks:
+      - openpoint-network
+
+  # Integration Engine (Apache Camel)
+  integration-engine:
+    build: ../integration-engine
+    ports:
+      - "8081:8081"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - platform-backend
+    networks:
+      - openpoint-network
+
+  # Kong API Gateway
+  kong-database:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: kong
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: kong123
+    volumes:
+      - kong_data:/var/lib/postgresql/data
+    networks:
+      - openpoint-network
+
+  kong-migration:
+    image: kong:3.4
+    command: kong migrations bootstrap
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong123
+    depends_on:
+      - kong-database
+    networks:
+      - openpoint-network
+    restart: on-failure
+
+  kong:
+    image: kong:3.4
+    ports:
+      - "8002:8000"
+      - "8001:8001"
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong123
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    depends_on:
+      - kong-migration
+    networks:
+      - openpoint-network
+
+  # Mock Services - REMOVED - Using remote server URLs configured in Connectors
+
+  # Observability
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - openpoint-network
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    ports:
+      - "3002:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - openpoint-network
+
+volumes:
+  postgres_data:
+  kong_data:
+  grafana_data:
+
+networks:
+  openpoint-network:
+    driver: bridge

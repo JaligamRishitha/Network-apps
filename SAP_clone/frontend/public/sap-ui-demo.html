@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAP ERP UI Demo - Component Showcase</title>
+    <style>
+        /**
+         * SAP Fiori/GUI Theme Styles - Inline Demo
+         */
+        :root {
+            --sap-shell-bg: #354a5f;
+            --sap-shell-hover: #4a6178;
+            --sap-shell-active: #0a6ed1;
+            --sap-header-bg: #ffffff;
+            --sap-content-bg: #f7f7f7;
+            --sap-border: #d9d9d9;
+            --sap-border-light: #e5e5e5;
+            --sap-gui-blue: #c5d9f1;
+            --sap-gui-light-blue: #dae8f5;
+            --sap-gui-dark-blue: #4f81bd;
+            --sap-gui-yellow: #ffd966;
+            --sap-gui-gray: #d0d0d0;
+            --sap-gui-section-bg: #b4c7e7;
+            --sap-success: #107e3e;
+            --sap-warning: #e9730c;
+            --sap-error: #bb0000;
+            --sap-info: #0a6ed1;
+            --sap-text-primary: #32363a;
+            --sap-text-secondary: #6a6d70;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: '72', 'Segoe UI', Arial, sans-serif;
+            font-size: 14px;
+            color: var(--sap-text-primary);
+            background-color: var(--sap-content-bg);
+            padding: 20px;
+        }
+
+        .demo-section {
+            background: white;
+            padding: 24px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+            border: 1px solid var(--sap-border);
+        }
+
+        .demo-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 16px 0;
+            color: var(--sap-shell-bg);
+            border-bottom: 2px solid var(--sap-shell-active);
+            padding-bottom: 8px;
+        }
+
+        .sap-gui-section {
+            background: linear-gradient(to bottom, #b4c7e7 0%, #8db3e2 100%);
+            border: 1px solid #4f81bd;
+            padding: 8px 16px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: #000;
+            border-radius: 2px;
+        }
+
+        .sap-toolbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--sap-border);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .sap-toolbar-button {
+            background-color: #ffffff;
+            border: 1px solid var(--sap-border);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .sap-toolbar-button:hover {
+            background-color: #f5f5f5;
+            border-color: #0a6ed1;
+        }
+
+        .sap-toolbar-button.primary {
+            background-color: #0a6ed1;
+            color: white;
+            border-color: #0a6ed1;
+        }
+
+        .sap-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 2px;
+            font-size: 12px;
+            font-weight: 500;
+            margin: 4px;
+        }
+
+        .sap-status.success {
+            background-color: #e5f5ed;
+            color: var(--sap-success);
+            border: 1px solid var(--sap-success);
+        }
+
+        .sap-status.warning {
+            background-color: #fef7f1;
+            color: var(--sap-warning);
+            border: 1px solid var(--sap-warning);
+        }
+
+        .sap-status.error {
+            background-color: #ffebeb;
+            color: var(--sap-error);
+            border: 1px solid var(--sap-error);
+        }
+
+        .sap-status.info {
+            background-color: #e5f3ff;
+            color: var(--sap-info);
+            border: 1px solid var(--sap-info);
+        }
+
+        .sap-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            border: 1px solid var(--sap-border);
+        }
+
+        .sap-table thead {
+            background: linear-gradient(to bottom, #f5f5f5 0%, #e8e8e8 100%);
+            border-bottom: 2px solid var(--sap-border);
+        }
+
+        .sap-table th {
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--sap-text-primary);
+            border-right: 1px solid var(--sap-border-light);
+        }
+
+        .sap-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--sap-border-light);
+            border-right: 1px solid var(--sap-border-light);
+            font-size: 14px;
+        }
+
+        .sap-table tbody tr:hover {
+            background-color: #f0f8ff;
+        }
+
+        .sap-gui-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--sap-gui-dark-blue);
+        }
+
+        .sap-gui-tab {
+            background: linear-gradient(to bottom, #dae8f5 0%, #c5d9f1 100%);
+            border: 1px solid var(--sap-gui-dark-blue);
+            border-bottom: none;
+            padding: 8px 20px;
+            cursor: pointer;
+            font-weight: 500;
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            top: 2px;
+        }
+
+        .sap-gui-tab.active {
+            background: #ffffff;
+            font-weight: 600;
+            border-bottom: 2px solid #ffffff;
+        }
+
+        .sap-form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--sap-border);
+            border-radius: 2px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .sap-form-input:focus {
+            outline: none;
+            border-color: #0a6ed1;
+            box-shadow: 0 0 0 1px #0a6ed1;
+        }
+
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .color-box {
+            padding: 16px;
+            border-radius: 4px;
+            text-align: center;
+            color: white;
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .header-demo {
+            background-color: var(--sap-shell-bg);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+
+        .logo-demo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background-color: #0a6ed1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div style="max-width: 1400px; margin: 0 auto;">
+        <div class="header-demo">
+            <div class="logo-demo">
+                <div class="logo-box">SAP</div>
+                <div>
+                    <div style="font-size: 20px; font-weight: 600;">SAP ERP UI Component Demo</div>
+                    <div style="font-size: 12px; opacity: 0.9;">Authentic SAP Fiori & SAP GUI Classic Design System</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Color Palette -->
+        <div class="demo-section">
+            <h2 class="demo-title">🎨 SAP Color Palette</h2>
+            <div class="color-palette">
+                <div class="color-box" style="background-color: #354a5f;">Shell Background<br>#354a5f</div>
+                <div class="color-box" style="background-color: #0a6ed1;">SAP Blue<br>#0a6ed1</div>
+                <div class="color-box" style="background-color: #107e3e;">Success<br>#107e3e</div>
+                <div class="color-box" style="background-color: #e9730c;">Warning<br>#e9730c</div>
+                <div class="color-box" style="background-color: #bb0000;">Error<br>#bb0000</div>
+                <div class="color-box" style="background-color: #c5d9f1; color: #000;">GUI Blue<br>#c5d9f1</div>
+            </div>
+        </div>
+
+        <!-- Section Headers -->
+        <div class="demo-section">
+            <h2 class="demo-title">📋 SAP GUI Section Headers</h2>
+            <div class="sap-gui-section">
+                Plant Maintenance - Equipment Master Data
+            </div>
+            <div class="sap-gui-section">
+                Materials Management - Inventory Overview
+            </div>
+            <div class="sap-gui-section">
+                Financial Accounting - General Ledger
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="demo-section">
+            <h2 class="demo-title">🔧 SAP Toolbar</h2>
+            <div class="sap-toolbar">
+                <button class="sap-toolbar-button primary">
+                    <span>📝</span> Create
+                </button>
+                <button class="sap-toolbar-button">
+                    <span>✏️</span> Change
+                </button>
+                <button class="sap-toolbar-button">
+                    <span>👁️</span> Display
+                </button>
+                <div style="width: 1px; height: 24px; background-color: #d9d9d9; margin: 0 4px;"></div>
+                <button class="sap-toolbar-button">
+                    <span>🔍</span> Find
+                </button>
+                <button class="sap-toolbar-button">
+                    <span>🖨️</span> Print
+                </button>
+                <button class="sap-toolbar-button">
+                    <span>📊</span> Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Badges -->
+        <div class="demo-section">
+            <h2 class="demo-title">🏷️ Status Indicators</h2>
+            <div>
+                <span class="sap-status success">✓ Approved</span>
+                <span class="sap-status warning">⚠️ Pending</span>
+                <span class="sap-status error">✗ Rejected</span>
+                <span class="sap-status info">ℹ️ In Progress</span>
+            </div>
+            <div style="margin-top: 12px;">
+                <span class="sap-status success">Operational</span>
+                <span class="sap-status warning">Low Stock</span>
+                <span class="sap-status error">Critical</span>
+                <span class="sap-status info">Available</span>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="demo-section">
+            <h2 class="demo-title">📑 SAP GUI Tabs</h2>
+            <div class="sap-gui-tabs">
+                <div class="sap-gui-tab active">General Data</div>
+                <div class="sap-gui-tab">History</div>
+                <div class="sap-gui-tab">Users</div>
+                <div class="sap-gui-tab">Contents</div>
+                <div class="sap-gui-tab">Rangers</div>
+                <div class="sap-gui-tab">Orders</div>
+            </div>
+            <div style="padding: 16px; background: white; border: 1px solid #4f81bd;">
+                <p style="margin: 0;">Tab content area - This is where your main content would appear</p>
+            </div>
+        </div>
+
+        <!-- Form Elements -->
+        <div class="demo-section">
+            <h2 class="demo-title">📝 Form Elements</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">Material Number</label>
+                    <input type="text" class="sap-form-input" placeholder="Enter material number...">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">Description</label>
+                    <input type="text" class="sap-form-input" placeholder="Enter description...">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">Cost Center</label>
+                    <input type="text" class="sap-form-input" value="CC-1000">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">Amount (USD)</label>
+                    <input type="text" class="sap-form-input" value="$125,000.00">
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="demo-section">
+            <h2 class="demo-title">📊 SAP Data Table</h2>
+            <table class="sap-table">
+                <thead>
+                    <tr>
+                        <th>Material ID</th>
+                        <th>Description</th>
+                        <th>Quantity</th>
+                        <th>Unit</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight: 600; color: #0a6ed1;">MAT-001</td>
+                        <td>Steel Plate 10mm</td>
+                        <td style="text-align: right;">450</td>
+                        <td>KG</td>
+                        <td style="text-align: right;">$125.50</td>
+                        <td><span class="sap-status success">Available</span></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #0a6ed1;">MAT-002</td>
+                        <td>Hydraulic Oil ISO 46</td>
+                        <td style="text-align: right;">85</td>
+                        <td>L</td>
+                        <td style="text-align: right;">$45.00</td>
+                        <td><span class="sap-status warning">Low Stock</span></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #0a6ed1;">MAT-003</td>
+                        <td>Bearing SKF 6205</td>
+                        <td style="text-align: right;">220</td>
+                        <td>PC</td>
+                        <td style="text-align: right;">$18.75</td>
+                        <td><span class="sap-status success">Available</span></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #0a6ed1;">MAT-004</td>
+                        <td>Welding Electrode 3.2mm</td>
+                        <td style="text-align: right;">15</td>
+                        <td>KG</td>
+                        <td style="text-align: right;">$32.00</td>
+                        <td><span class="sap-status error">Critical</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="demo-section">
+            <h2 class="demo-title">📈 KPI Cards</h2>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                <div style="padding: 16px; background: #e5f3ff; border-radius: 4px; border: 1px solid #0a6ed1; text-align: center;">
+                    <div style="font-size: 12px; color: #6a6d70; margin-bottom: 4px;">Total Active</div>
+                    <div style="font-size: 32px; font-weight: 600; color: #0a6ed1;">24</div>
+                </div>
+                <div style="padding: 16px; background: #fef7f1; border-radius: 4px; border: 1px solid #e9730c; text-align: center;">
+                    <div style="font-size: 12px; color: #6a6d70; margin-bottom: 4px;">In Progress</div>
+                    <div style="font-size: 32px; font-weight: 600; color: #e9730c;">8</div>
+                </div>
+                <div style="padding: 16px; background: #e5f5ed; border-radius: 4px; border: 1px solid #107e3e; text-align: center;">
+                    <div style="font-size: 12px; color: #6a6d70; margin-bottom: 4px;">Completed</div>
+                    <div style="font-size: 32px; font-weight: 600; color: #107e3e;">12</div>
+                </div>
+                <div style="padding: 16px; background: #ffebeb; border-radius: 4px; border: 1px solid #bb0000; text-align: center;">
+                    <div style="font-size: 12px; color: #6a6d70; margin-bottom: 4px;">Overdue</div>
+                    <div style="font-size: 32px; font-weight: 600; color: #bb0000;">3</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 20px; color: #6a6d70; font-size: 12px;">
+            SAP ERP Demo System © 2026 | Authentic SAP Fiori & SAP GUI Design
+        </div>
+    </div>
+</body>
+</html>

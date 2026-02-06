@@ -1,0 +1,40 @@
+# Virtual environments
+mcp_venv/
+venv/
+.venv/
+env/
+
+# Node modules
+node_modules/
+
+# Python compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Log files
+*.log
+
+# Environment variables
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dist/build
+dist/
+build/

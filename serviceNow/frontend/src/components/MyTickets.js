@@ -53,6 +53,7 @@ const MyTickets = () => {
   const [approvalComments, setApprovalComments] = useState('');
   const [tabValue, setTabValue] = useState(0);
   const [actionLoading, setActionLoading] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     // Check URL parameter for tab selection
@@ -271,6 +272,15 @@ const MyTickets = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([fetchTickets(), fetchPendingApprovalTickets()]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
@@ -305,11 +315,12 @@ const MyTickets = () => {
           </Typography>
           <Button
             variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={() => { fetchTickets(); fetchPendingApprovalTickets(); }}
+            startIcon={<RefreshIcon sx={{ animation: refreshing ? 'spin 1s linear infinite' : 'none', '@keyframes spin': { '0%': { transform: 'rotate(0deg)' }, '100%': { transform: 'rotate(360deg)' } } }} />}
+            onClick={handleRefresh}
+            disabled={refreshing}
             sx={{ borderColor: '#FF8C42', color: '#FF8C42' }}
           >
-            Refresh
+            {refreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
         </Box>
         
@@ -416,7 +427,7 @@ const MyTickets = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    tickets.map((ticket) => (
+                    [...tickets].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map((ticket) => (
                       <TableRow key={ticket.id} hover>
                         <TableCell>
                           <Typography variant="body2" sx={{ fontFamily: 'monospace', color: '#8B1538' }}>

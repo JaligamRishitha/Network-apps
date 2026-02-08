@@ -727,8 +727,8 @@ async def validate_single_request_endpoint(
             import uuid
             mulesoft_tx_id = f"MULE-{uuid.uuid4().hex[:12]}"
 
-            # Update integration status in Salesforce
-            new_status = "VALIDATED" if validation["valid"] else "VALIDATION_FAILED"
+            # Update Salesforce integration status to VALIDATED
+            new_status = "VALIDATED" if validation["valid"] else "FAILED"
             try:
                 update_response = await client.put(
                     f"{sf_url}/api/accounts/requests/{payload.request_id}",

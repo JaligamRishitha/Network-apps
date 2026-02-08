@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://149.102.158.71:4780';
+  const API_URL = process.env.REACT_APP_API_URL || 'http://207.180.217.117:4780';
 
   const fetchUser = useCallback(async () => {
     try {

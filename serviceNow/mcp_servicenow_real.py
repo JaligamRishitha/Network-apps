@@ -280,7 +280,7 @@ def run_http_server():
     print(f"  Host: {MCP_HOST}")
     print(f"  Port: {MCP_PORT}")
     print(f"  ServiceNow Backend: {SERVICENOW_BASE_URL}")
-    print(f"  SSE Endpoint: http://149.102.158.71:{MCP_PORT}/sse")
+    print(f"  SSE Endpoint: http://207.180.217.117:{MCP_PORT}/sse")
     uvicorn.run(app, host=MCP_HOST, port=MCP_PORT)
 
 

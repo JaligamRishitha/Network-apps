@@ -8,7 +8,7 @@ import StatCard from '../components/StatCard';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:18000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -138,6 +138,8 @@ export default function ServiceNowScenarios() {
   const [selectedTechnician, setSelectedTechnician] = useState(null);
   const [currentRequestId, setCurrentRequestId] = useState(null);
   const [fetchingTechnicians, setFetchingTechnicians] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailItem, setDetailItem] = useState(null);
 
   useEffect(() => {
     // Clear results when switching scenarios
@@ -323,8 +325,9 @@ export default function ServiceNowScenarios() {
     }
   };
 
-  const handleViewDetails = (id) => {
-    toast.success(`Viewing details for ID: ${id}`);
+  const handleViewDetails = (item) => {
+    setDetailItem(item);
+    setShowDetailModal(true);
   };
 
   const handleDeleteRequest = async (id, name) => {
@@ -371,16 +374,14 @@ export default function ServiceNowScenarios() {
 
     return (
       <div>
-        <h3 className="text-lg font-bold mb-2">Scenario 1: New Client Creation</h3>
-        <p className="text-gray-600 mb-6">Account Creation &rarr; ServiceNow &rarr; SAP Customer Master</p>
+        <h3 className="text-lg font-bold mb-2">New Client Creation</h3>
+        <p className="text-gray-600 mb-6">Account Creation &rarr; Mulesoft Integration &rarr, ServiceNow &rarr; SAP Customer Master</p>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-5 gap-4 mb-6">
           <StatCard title="Total Synced" value={totalSynced} color="green" />
-          <StatCard title="Success Rate" value={`${successRate}%`} color="blue" />
           <StatCard title="Pending" value={pendingCount} color="yellow" />
-          <StatCard title="Duplicates" value={duplicateCount} color="orange" />
-          <StatCard title="Failed" value={failedCount} color="red" />
+          <StatCard title="Rejected" value={failedCount} color="red" />
         </div>
 
         {/* Accounts Table */}
@@ -391,7 +392,7 @@ export default function ServiceNowScenarios() {
                 <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Account Name</th>
                 <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Integration Status</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">SAP Customer ID</th>
+
                 <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">ServiceNow Ticket</th>
                 <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Correlation ID</th>
                 <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Sync Date</th>
@@ -411,9 +412,7 @@ export default function ServiceNowScenarios() {
                       ticketId={account.servicenow_ticket_id}
                     />
                   </td>
-                  <td className="p-3 font-mono text-sm text-green-600 font-medium">
-                    {account.sap_customer_id || '-'}
-                  </td>
+                 
                   <td className="p-3">
                     <ServiceNowTicketLink ticketId={account.servicenow_ticket_id} />
                   </td>
@@ -426,7 +425,7 @@ export default function ServiceNowScenarios() {
                   <td className="p-3">
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleViewDetails(account.id)}
+                        onClick={() => handleViewDetails(account)}
                         className="p-1 text-gray-500 hover:text-blue-600"
                         title="View Details"
                       >
@@ -466,7 +465,7 @@ export default function ServiceNowScenarios() {
     );
   };
 
-  // Scenario 2: Scheduling & Dispatching
+  // 
   const renderScenario2 = () => {
     const appointmentsToday = results.filter(r => {
       const created = new Date(r.created_at);
@@ -480,16 +479,15 @@ export default function ServiceNowScenarios() {
 
     return (
       <div>
-        <h3 className="text-lg font-bold mb-2">Scenario 2: Scheduling & Dispatching</h3>
-        <p className="text-gray-600 mb-6">Service Appointment &rarr; ServiceNow &rarr; SAP HR (Technician) & SAP Inventory (Parts)</p>
+        <h3 className="text-lg font-bold mb-2">Work Order</h3>
+        <p className="text-gray-600 mb-6">Service Appointment &rarr; ServiceNow &rarr; SAP</p>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-5 gap-4 mb-6">
           <StatCard title="Today" value={appointmentsToday} color="blue" />
           <StatCard title="Pending" value={scheduledCount} color="yellow" />
-          <StatCard title="Success" value={successCount} color="green" />
-          <StatCard title="Parts Issues" value={partsIssuesCount} color="orange" />
-          <StatCard title="Failed" value={failedCount} color="red" />
+          <StatCard title="Approved" value={successCount} color="green" />
+          <StatCard title="Rejected" value={failedCount} color="red" />
         </div>
 
         {/* Appointments Table */}
@@ -499,7 +497,7 @@ export default function ServiceNowScenarios() {
               <tr className="bg-gray-100">
                 <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Appointment</th>
                 <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Assigned Technician</th>
+                {/* <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Assigned Technician</th> */}
                 <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Parts Available</th>
                 <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">ServiceNow Ticket</th>
                 <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Correlation ID</th>
@@ -519,7 +517,7 @@ export default function ServiceNowScenarios() {
                   <td className="p-3">
                     <StatusBadge status={apt.status} />
                   </td>
-                  <td className="p-3 text-sm">
+                  {/* <td className="p-3 text-sm">
                     {apt.technician_name ? (
                       <span className="text-green-600 font-medium">
                         {apt.technician_name}
@@ -528,7 +526,7 @@ export default function ServiceNowScenarios() {
                     ) : (
                       <span className="text-gray-400">Not assigned</span>
                     )}
-                  </td>
+                  </td> */}
                   <td className="p-3 text-sm">
                     {apt.parts_available ? (
                       <span className="text-green-600 font-medium">Yes</span>
@@ -548,20 +546,12 @@ export default function ServiceNowScenarios() {
                   <td className="p-3">
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleViewDetails(apt.id)}
+                        onClick={() => handleViewDetails(apt)}
                         className="p-1 text-gray-500 hover:text-blue-600"
                         title="View Details"
                       >
                         <EyeIcon className="w-4 h-4" />
                       </button>
-                      {apt.status === 'PARTS_UNAVAILABLE' && (
-                        <button
-                          onClick={() => handleCheckParts(apt.id)}
-                          className="px-2 py-1 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
-                        >
-                          Check Parts
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -651,7 +641,7 @@ export default function ServiceNowScenarios() {
                   <td className="p-3">
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleViewDetails(wo.id)}
+                        onClick={() => handleViewDetails(wo)}
                         className="p-1 text-gray-500 hover:text-blue-600"
                         title="View Details"
                       >
@@ -808,7 +798,6 @@ export default function ServiceNowScenarios() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">ServiceNow Integration Scenarios</h1>
         <button
           type="button"
           onClick={() => {
@@ -833,7 +822,7 @@ export default function ServiceNowScenarios() {
               : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
           }`}
         >
-          Scenario 1: New Client
+          Client Accounts
         </button>
         <button
           onClick={() => setActiveScenario('scenario2')}
@@ -843,9 +832,9 @@ export default function ServiceNowScenarios() {
               : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
           }`}
         >
-          Scenario 2: Scheduling
+           Work Order
         </button>
-        <button
+        {/* <button
           onClick={() => setActiveScenario('scenario3')}
           className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
             activeScenario === 'scenario3'
@@ -853,8 +842,10 @@ export default function ServiceNowScenarios() {
               : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
           }`}
         >
-          Scenario 3: Work Order
-        </button>
+         Scenario 3:
+         
+        Work Order
+        </button> */}
       </div>
 
       {/* Scenario Content */}
@@ -866,6 +857,55 @@ export default function ServiceNowScenarios() {
 
       {/* Technician Selection Modal */}
       {renderTechnicianModal()}
+
+      {/* Detail Modal */}
+      {showDetailModal && detailItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-bold">
+                {detailItem.appointment_number || detailItem.work_order_number || detailItem.name || 'Details'}
+              </h3>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              {Object.entries(detailItem)
+                .filter(([key]) => !['id', '__v'].includes(key))
+                .map(([key, value]) => (
+                  <div key={key} className="flex border-b border-gray-100 pb-2">
+                    <span className="w-1/3 text-sm font-medium text-gray-500 capitalize">
+                      {key.replace(/_/g, ' ')}
+                    </span>
+                    <span className="w-2/3 text-sm text-gray-900 break-all">
+                      {value === null || value === undefined
+                        ? '-'
+                        : typeof value === 'boolean'
+                        ? value ? 'Yes' : 'No'
+                        : typeof value === 'object'
+                        ? JSON.stringify(value, null, 2)
+                        : key.includes('created_at') || key.includes('updated_at')
+                        ? new Date(value).toLocaleString()
+                        : String(value)}
+                    </span>
+                  </div>
+                ))}
+            </div>
+            <div className="flex justify-end p-4 border-t bg-gray-50">
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

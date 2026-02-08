@@ -79,9 +79,13 @@ async def get_db() -> AsyncGenerator:
 
 
 async def init_db() -> None:
-    """Initialize database tables."""
+    """Initialize database schemas and tables."""
+    from sqlalchemy import text
     engine = _get_engine()
     async with engine.begin() as conn:
+        # Create required PostgreSQL schemas
+        for schema in ("core", "pm", "mm", "fi", "pm_workflow"):
+            await conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
         await conn.run_sync(Base.metadata.create_all)
 
 

@@ -143,7 +143,7 @@ var ORCHESTRATOR_URL = 'http://localhost:2486/api/webhook/servicenow';
 ### Using Network Address (if running on different machine)
 
 ```javascript
-var ORCHESTRATOR_URL = 'http://149.102.158.71:2486/api/webhook/servicenow';
+var ORCHESTRATOR_URL = 'http://207.180.217.117:2486/api/webhook/servicenow';
 ```
 
 ## Testing the Configuration

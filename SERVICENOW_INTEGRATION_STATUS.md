@@ -61,7 +61,7 @@ This script:
 ```javascript
 // POST to Salesforce
 const appointmentResponse = await fetch(
-  'http://149.102.158.71:4799/api/service/appointments',
+  'http://207.180.217.117:4799/api/service/appointments',
   {
     method: 'POST',
     headers: {
@@ -92,7 +92,7 @@ const appointmentNumber = appointment.appointment.appointment_number;
 ```javascript
 // Get ServiceNow token
 const snowTokenResponse = await fetch(
-  'http://149.102.158.71:4780/token',
+  'http://207.180.217.117:4780/token',
   {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -103,7 +103,7 @@ const { access_token } = await snowTokenResponse.json();
 
 // Create ServiceNow ticket
 const ticketResponse = await fetch(
-  `http://149.102.158.71:4780/api/servicenow/incidents?${new URLSearchParams({
+  `http://207.180.217.117:4780/api/servicenow/incidents?${new URLSearchParams({
     short_description: `Service Appointment: ${appointment.appointment.subject}`,
     description: `Appointment ${appointmentNumber}\n${appointment.appointment.description}`,
     category: 'request',
@@ -126,8 +126,8 @@ const ticketNumber = ticket.result.number; // e.g., INC7239331
 ```jsx
 import React, { useState } from 'react';
 
-const SALESFORCE_API = 'http://149.102.158.71:4799';
-const SERVICENOW_API = 'http://149.102.158.71:4780';
+const SALESFORCE_API = 'http://207.180.217.117:4799';
+const SERVICENOW_API = 'http://207.180.217.117:4780';
 
 function AppointmentCreator() {
   const [result, setResult] = useState(null);
@@ -271,7 +271,7 @@ export default AppointmentCreator;
 ```javascript
 async function getAppointments() {
   // Login first
-  const auth = await fetch('http://149.102.158.71:4799/api/auth/login', {
+  const auth = await fetch('http://207.180.217.117:4799/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: 'admin', password: 'admin123' })
@@ -280,7 +280,7 @@ async function getAppointments() {
 
   // Get appointments
   const response = await fetch(
-    'http://149.102.158.71:4799/api/service/scheduling-requests',
+    'http://207.180.217.117:4799/api/service/scheduling-requests',
     { headers: { 'Authorization': `Bearer ${access_token}` } }
   );
 
@@ -293,7 +293,7 @@ async function getAppointments() {
 ```javascript
 async function getServiceNowTickets() {
   // Login
-  const auth = await fetch('http://149.102.158.71:4780/token', {
+  const auth = await fetch('http://207.180.217.117:4780/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: 'username=admin@company.com&password=admin123'
@@ -302,7 +302,7 @@ async function getServiceNowTickets() {
 
   // Get tickets
   const response = await fetch(
-    'http://149.102.158.71:4780/tickets/',
+    'http://207.180.217.117:4780/tickets/',
     { headers: { 'Authorization': `Bearer ${access_token}` } }
   );
 

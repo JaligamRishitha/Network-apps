@@ -6,7 +6,7 @@ Test ServiceNow Connection and Create Sample Ticket
 import requests
 import json
 
-SERVICENOW_API = "http://149.102.158.71:4780"
+SERVICENOW_API = "http://207.180.217.117:4780"
 SERVICENOW_USER = "admin@company.com"
 SERVICENOW_PASSWORD = "admin123"
 

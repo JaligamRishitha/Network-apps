@@ -16,14 +16,12 @@ class User(Base):
     password = Column(String(255), nullable=False)  # Hashed password
     roles = Column(JSON, nullable=False)  # List of role strings
     is_active = Column(Boolean, default=True)
+    password_expired = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_login = Column(DateTime, nullable=True)
 
-    __table_args__ = (
-        Index('ix_users_username', 'username'),
-        Index('ix_users_email', 'email'),
-    )
+    # Indexes already created by index=True on columns above
 
 
 class PasswordResetTicket(Base):

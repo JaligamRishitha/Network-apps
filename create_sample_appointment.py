@@ -9,7 +9,7 @@ import json
 from datetime import datetime, timedelta
 
 # Configuration
-SALESFORCE_API = "http://149.102.158.71:4799"
+SALESFORCE_API = "http://207.180.217.117:4799"
 USERNAME = "admin"
 PASSWORD = "admin123"
 
@@ -129,6 +129,6 @@ if __name__ == "__main__":
             print("\n❌ Failed to create sample appointment")
     except requests.exceptions.ConnectionError:
         print("\n❌ Error: Cannot connect to Salesforce backend")
-        print("   Please ensure the backend is running at http://149.102.158.71:4799")
+        print("   Please ensure the backend is running at http://207.180.217.117:4799")
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")

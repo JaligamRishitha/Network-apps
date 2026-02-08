@@ -17,7 +17,7 @@
 │  └──────────────────────────────────────────────────────────┘  │
 │                           │                                      │
 │                           │ API Requests (Axios)                 │
-│                           │ VITE_API_URL → http://149.102.158.71:4799
+│                           │ VITE_API_URL → http://207.180.217.117:4799
 │                           │                                      │
 └───────────────────────────┼──────────────────────────────────────┘
                             │
@@ -25,7 +25,7 @@
                             │
 ┌───────────────────────────▼──────────────────────────────────────┐
 │                    CONTABO SERVER                                │
-│                    149.102.158.71                                │
+│                    207.180.217.117                                │
 │                                                                   │
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │         FastAPI Backend (Port 4799)                        │ │
@@ -100,7 +100,7 @@
 
 ```bash
 # SSH into your server
-ssh root@149.102.158.71
+ssh root@207.180.217.117
 
 # Check if all containers are running
 docker ps
@@ -127,11 +127,11 @@ exit
 **Quick Test from Local Machine:**
 ```bash
 # Test API connectivity from your laptop
-curl http://149.102.158.71:4799/api/health
+curl http://207.180.217.117:4799/api/health
 # Expected response: {"status":"healthy"}
 
 # Test API docs are accessible
-curl http://149.102.158.71:4799/docs
+curl http://207.180.217.117:4799/docs
 ```
 
 #### Step 2: Start Local Frontend
@@ -141,7 +141,7 @@ curl http://149.102.158.71:4799/docs
 cd ~/Network-apps/Salesforce/frontend
 
 # Create .env file if not exists (one-time setup)
-echo "VITE_API_URL=http://149.102.158.71:4799" > .env
+echo "VITE_API_URL=http://207.180.217.117:4799" > .env
 
 # Install dependencies (if needed)
 npm install
@@ -203,7 +203,7 @@ You're ready to code! Changes to React components will hot-reload automatically.
 
 ```bash
 # SSH into server
-ssh root@149.102.158.71
+ssh root@207.180.217.117
 
 # Navigate to project directory
 cd /path/to/Salesforce
@@ -264,7 +264,7 @@ exit
 
 **Test from local machine:**
 ```bash
-curl http://149.102.158.71:4799/api/reports/sales-summary
+curl http://207.180.217.117:4799/api/reports/sales-summary
 ```
 
 #### Phase 2: Frontend Development (on Local Laptop)
@@ -359,7 +359,7 @@ import Reports from './pages/Reports';
 ```
 ┌─────────────────────────────────────────┐
 │ SSH into server                          │
-│ ssh root@149.102.158.71                  │
+│ ssh root@207.180.217.117                  │
 └─────────────────┬───────────────────────┘
                   │
                   ▼
@@ -460,7 +460,7 @@ Fix locally          Debug on server
 
 ```bash
 # SSH into server
-ssh root@149.102.158.71
+ssh root@207.180.217.117
 
 # Check if containers are running
 docker ps
@@ -490,7 +490,7 @@ free -m
 
 ```bash
 # SSH into server
-ssh root@149.102.158.71
+ssh root@207.180.217.117
 
 # Connect to Salesforce database
 docker exec -it salesforce-db psql -U salesforce -d salesforce_crm
@@ -513,7 +513,7 @@ docker exec -it servicenow-db psql -U servicenow -d servicenow_itsm
 
 **Issue 1: CORS Error**
 ```
-Access to fetch at 'http://149.102.158.71:4799/api/...'
+Access to fetch at 'http://207.180.217.117:4799/api/...'
 from origin 'http://localhost:5173' has been blocked by CORS policy
 ```
 
@@ -525,8 +525,8 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
-        "http://149.102.158.71:5173",
-        "http://149.102.158.71:4799",
+        "http://207.180.217.117:5173",
+        "http://207.180.217.117:4799",
         # Add new origins here
     ],
     allow_credentials=True,
@@ -538,7 +538,7 @@ app.add_middleware(
 **Issue 2: API Not Responding**
 ```bash
 # Check if backend container is running
-ssh root@149.102.158.71
+ssh root@207.180.217.117
 docker ps | grep backend
 
 # If not running, start all services
@@ -675,7 +675,7 @@ git push origin main
 
 ```bash
 # SSH into server
-ssh root@149.102.158.71
+ssh root@207.180.217.117
 
 # Navigate to project
 cd /path/to/Salesforce
@@ -723,19 +723,19 @@ exit
 
 ```bash
 # Health check
-curl http://149.102.158.71:4799/api/health
+curl http://207.180.217.117:4799/api/health
 
 # Login (get token)
-curl -X POST http://149.102.158.71:4799/api/auth/login \
+curl -X POST http://207.180.217.117:4799/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "admin", "password": "password"}'
 
 # Use token for authenticated requests
-curl http://149.102.158.71:4799/api/accounts \
+curl http://207.180.217.117:4799/api/accounts \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 
 # Check API documentation
-# Open in browser: http://149.102.158.71:4799/docs
+# Open in browser: http://207.180.217.117:4799/docs
 ```
 
 ---
@@ -746,7 +746,7 @@ curl http://149.102.158.71:4799/api/accounts \
 
 ```bash
 # frontend/.env
-VITE_API_URL=http://149.102.158.71:4799
+VITE_API_URL=http://207.180.217.117:4799
 ```
 
 ### Server (.env in project root)
@@ -786,7 +786,7 @@ MULESOFT_CLIENT_SECRET=your-mulesoft-client-secret
                   ▼
 ┌─────────────────────────────────────────┐
 │ 3. Check server status (optional)        │
-│    ssh root@149.102.158.71               │
+│    ssh root@207.180.217.117               │
 │    docker ps                             │
 │    exit                                  │
 └─────────────────────────────────────────┘
@@ -800,7 +800,7 @@ MULESOFT_CLIENT_SECRET=your-mulesoft-client-secret
 
 ```bash
 # Quick restart
-ssh root@149.102.158.71
+ssh root@207.180.217.117
 docker-compose restart backend
 docker logs salesforce-backend --tail 50
 exit
@@ -809,7 +809,7 @@ exit
 ### All Services Down
 
 ```bash
-ssh root@149.102.158.71
+ssh root@207.180.217.117
 cd /path/to/Salesforce
 docker-compose up -d
 docker ps
@@ -819,7 +819,7 @@ exit
 ### Database Connection Lost
 
 ```bash
-ssh root@149.102.158.71
+ssh root@207.180.217.117
 
 # Check database status
 docker ps | grep db
@@ -836,7 +836,7 @@ docker-compose restart backend
 
 ### Server Unresponsive
 
-1. Try SSH: `ssh root@149.102.158.71`
+1. Try SSH: `ssh root@207.180.217.117`
 2. If SSH works:
    ```bash
    htop          # Check resources
@@ -866,14 +866,14 @@ git push origin main           # Push to remote
 git pull origin main           # Pull latest
 
 # Test API
-curl http://149.102.158.71:4799/api/health
+curl http://207.180.217.117:4799/api/health
 ```
 
-### SERVER (149.102.158.71)
+### SERVER (207.180.217.117)
 
 ```bash
 # Connect
-ssh root@149.102.158.71
+ssh root@207.180.217.117
 
 # Docker
 docker ps                              # List running containers
@@ -957,5 +957,5 @@ Salesforce/
 4. **Commit frequently** - Small, focused commits are easier to debug
 5. **Test as you go** - Don't wait until the end to test
 6. **Backup database before schema changes** - Always create a backup first
-7. **Use FastAPI docs** - Visit `http://149.102.158.71:4799/docs` for interactive API testing
+7. **Use FastAPI docs** - Visit `http://207.180.217.117:4799/docs` for interactive API testing
 8. **Check CORS** - If API calls fail, CORS is often the culprit

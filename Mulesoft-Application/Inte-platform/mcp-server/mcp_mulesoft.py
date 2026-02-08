@@ -2062,11 +2062,11 @@ error_logger = ErrorLogger(max_entries=10000, payload_retention_hours=24)
 # CONFIGURATION
 # ============================================================================
 
-BACKEND_API_URL = "http://149.102.158.71:4797/api"  # Remote MuleSoft backend
-SAP_API_URL = "http://149.102.158.71:4798"  # Remote SAP backend
-SERVICENOW_API_URL = "http://149.102.158.71:4780"  # Remote ServiceNow backend
-SALESFORCE_API_URL = "http://149.102.158.71:4799"  # Remote Salesforce backend
-SALESFORCE_MCP_URL = "http://149.102.158.71:8095"  # Salesforce MCP Server (SSE)
+BACKEND_API_URL = "http://207.180.217.117:4797/api"  # Remote MuleSoft backend
+SAP_API_URL = "http://207.180.217.117:4798"  # Remote SAP backend
+SERVICENOW_API_URL = "http://207.180.217.117:4780"  # Remote ServiceNow backend
+SALESFORCE_API_URL = "http://207.180.217.117:4799"  # Remote Salesforce backend
+SALESFORCE_MCP_URL = "http://207.180.217.117:8095"  # Salesforce MCP Server (SSE)
 MCP_HTTP_PORT = 8090  # Port for HTTP API
 
 
@@ -2393,8 +2393,8 @@ connectors_db = {
         "name": "Salesforce Production",
         "connector_type": "salesforce",
         "connection_config": {
-            "server_url": "http://149.102.158.71:4799",
-            "mcp_server_url": "http://149.102.158.71:8095",
+            "server_url": "http://207.180.217.117:4799",
+            "mcp_server_url": "http://207.180.217.117:8095",
             "use_mcp": True
         },
         "status": "active",

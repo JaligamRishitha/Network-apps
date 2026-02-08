@@ -89,7 +89,7 @@ services:
       - MULESOFT_DB_URL=postgresql://mulesoft:${MULESOFT_DB_PASSWORD:-mulesoft_secret}@mulesoft-db:5432/mulesoft_integration
       - SERVICENOW_DB_URL=postgresql://servicenow:${SERVICENOW_DB_PASSWORD:-servicenow_secret}@servicenow-db:5432/servicenow_itsm
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
-      - MULESOFT_BASE_URL=http://149.102.158.71:4799
+      - MULESOFT_BASE_URL=http://207.180.217.117:4799
       - MULESOFT_ACCOUNT_REQUEST_PATH=/
       - MULESOFT_TIMEOUT_SECONDS=10
       - MULESOFT_SHARED_SECRET=dev-mulesoft-secret

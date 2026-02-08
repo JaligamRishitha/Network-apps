@@ -53,6 +53,7 @@ class TicketCategory(str, Enum):
     INTEGRATION_ERROR = "integration_error"
     DATA_SYNC_ISSUE = "data_sync_issue"
     SYSTEM_ERROR = "system_error"
+    WORK_ORDER = "work_order"
     MANUAL = "manual"  # Requires human intervention
 
 class TicketStatus(str, Enum):
@@ -151,6 +152,10 @@ def classify_ticket(ticket: ServiceNowTicket) -> TicketCategory:
     if any(keyword in description_lower for keyword in ["500 error", "system down", "application crash", "database error"]):
         return TicketCategory.SYSTEM_ERROR
 
+    # Work order / appointment patterns
+    if any(keyword in description_lower for keyword in ["work order", "service appointment", "appointment request", "field service", "maintenance order"]):
+        return TicketCategory.WORK_ORDER
+
     # Default to manual
     return TicketCategory.MANUAL
 
@@ -226,14 +231,43 @@ def extract_parameters(ticket: OrchestrationTicket) -> Dict:
 
     elif ticket.category == TicketCategory.USER_CREATION:
         # Extract user details
+        import re
         params["action"] = "create_user"
-        # You'd parse the description for name, email, role, etc.
+        email_match = re.search(r'Email:\s*([\w\.\-\+]+@[\w\.\-]+\.\w+)', ticket.description)
+        if email_match:
+            params["email"] = email_match.group(0).split(":")[-1].strip()
+        client_id_match = re.search(r'Client User ID:\s*(\d+)', ticket.description)
+        if client_id_match:
+            params["client_user_id"] = client_id_match.group(1)
+        acct_match = re.search(r'Account:\s*(.+?)(?:\s*\(ID:|\n|$)', ticket.description)
+        if acct_match:
+            params["account_name"] = acct_match.group(1).strip()
 
     elif ticket.category == TicketCategory.INTEGRATION_ERROR:
         # Extract systems involved
         if "salesforce" in description and "sap" in description:
             params["systems"] = ["salesforce", "sap"]
             params["integration_layer"] = "mulesoft"
+
+    elif ticket.category == TicketCategory.WORK_ORDER:
+        # Parse fields matching the Salesforce appointment ticket format:
+        #   Type: ..., Location: ..., Required Skills: ..., Required Parts: ...
+        #   Scheduled Start: ..., Scheduled End: ..., Request ID: ...
+        import re
+        raw = ticket.description
+
+        def _extract(field_name: str) -> str:
+            match = re.search(rf'{field_name}\s*:\s*(.+)', raw, re.IGNORECASE)
+            return match.group(1).strip() if match else ""
+
+        params["subject"] = ticket.title
+        params["appointment_type"] = _extract("Type") or "Field Service"
+        params["location"] = _extract("Location") or "Not specified"
+        params["required_parts"] = _extract("Required Parts") or "Not specified"
+        params["scheduled_start"] = _extract("Scheduled Start") or "Not specified"
+        params["scheduled_end"] = _extract("Scheduled End") or "Not specified"
+        params["request_id"] = _extract("Request ID") or ""
+        params["description"] = ticket.description
 
     return params
 
@@ -274,7 +308,14 @@ async def receive_servicenow_ticket(ticket: ServiceNowTicket, background_tasks: 
         }
     )
 
-    # Store ticket in database
+    # Store ticket in database (skip if already exists)
+    if db_ticket_exists(orch_ticket.id):
+        logger.info(f"Ticket {ticket.number} already exists, skipping")
+        return {
+            "status": "duplicate",
+            "orchestration_ticket_id": orch_ticket.id,
+            "message": "Ticket already received"
+        }
     db_create_ticket(orch_ticket.model_dump())
 
     # Check if can auto-resolve
@@ -347,6 +388,238 @@ async def process_ticket_with_agent(ticket_id: str):
         })
         logger.info(f"Ticket {ticket_id} resolved successfully")
 
+        # For user_creation: activate client user in Salesforce if applicable
+        if ticket.category.value == "user_creation":
+            # Try agent response first, then fall back to extracting from ticket description
+            client_user_id = agent_response.result.get("client_user_id")
+            if not client_user_id and "Client User ID:" in ticket.description:
+                import re
+                id_match = re.search(r'Client User ID:\s*(\d+)', ticket.description)
+                if id_match:
+                    client_user_id = id_match.group(1)
+
+            if client_user_id:
+                try:
+                    import requests as sync_requests
+                    activate_resp = sync_requests.patch(
+                        f"http://207.180.217.117:4799/api/client-users/{client_user_id}/activate",
+                        timeout=10
+                    )
+                    if activate_resp.status_code == 200:
+                        logger.info(f"Salesforce client user {client_user_id} activated successfully")
+                    else:
+                        logger.error(f"Failed to activate client user {client_user_id}: {activate_resp.status_code} - {activate_resp.text}")
+                except Exception as e:
+                    logger.error(f"Error activating client user {client_user_id}: {e}")
+            else:
+                logger.warning(f"No client_user_id found for user_creation ticket {ticket_id}")
+
+        # For password reset, update the password in SAP database
+        if ticket.category.value == "password_reset":
+            new_password = agent_response.result.get("password")
+            sap_username = ticket.metadata.get("sap_username") or ticket.description.split("SAP Username:")[1].split("\n")[0].strip() if "SAP Username:" in ticket.description else None
+            if new_password and sap_username:
+                try:
+                    import requests as sync_requests
+                    # Login to SAP as admin
+                    sap_auth = sync_requests.post(
+                        "http://207.180.217.117:4798/api/v1/auth/login",
+                        json={"username": "admin", "password": "admin123"},
+                        timeout=10
+                    )
+                    if sap_auth.status_code == 200:
+                        sap_token = sap_auth.json().get("access_token")
+                        # Update password in SAP
+                        sap_resp = sync_requests.patch(
+                            f"http://207.180.217.117:4798/api/v1/users/{sap_username}/password",
+                            json={"username": sap_username, "new_password": new_password},
+                            headers={"Authorization": f"Bearer {sap_token}"},
+                            timeout=10
+                        )
+                        if sap_resp.status_code == 200:
+                            logger.info(f"SAP password updated for user {sap_username}")
+                        else:
+                            logger.error(f"Failed to update SAP password: {sap_resp.status_code} - {sap_resp.text}")
+                    else:
+                        logger.error(f"Failed to authenticate with SAP for password update")
+                except Exception as e:
+                    logger.error(f"Error updating SAP password: {e}")
+
+            # Also update Salesforce client_users password if applicable
+            import re as _re_pw
+            pw_email_match = _re_pw.search(r'[\w\.\-\+]+@[\w\.\-]+\.\w+', ticket.description)
+            pw_email = pw_email_match.group(0) if pw_email_match else None
+            if new_password and pw_email:
+                try:
+                    import requests as sync_requests
+                    # Validate client user exists
+                    validate_resp = sync_requests.post(
+                        "http://207.180.217.117:4799/api/client-users/validate",
+                        json={"email": pw_email},
+                        timeout=10
+                    )
+                    if validate_resp.status_code == 200 and validate_resp.json().get("exists"):
+                        # Update client user password
+                        pw_resp = sync_requests.patch(
+                            f"http://207.180.217.117:4799/api/client-users/{pw_email}/password",
+                            json={"new_password": new_password},
+                            timeout=10
+                        )
+                        if pw_resp.status_code == 200:
+                            logger.info(f"Salesforce client user password updated for {pw_email}")
+                        else:
+                            logger.error(f"Failed to update Salesforce client user password: {pw_resp.status_code}")
+                    else:
+                        logger.info(f"No Salesforce client user found for {pw_email}, skipping client password update")
+                except Exception as e:
+                    logger.error(f"Error updating Salesforce client user password: {e}")
+
+        # For work_order: agent validated — now orchestrator creates work order in SAP
+        if ticket.category.value == "work_order":
+            try:
+                import requests as sync_requests
+                import re
+
+                # Extract request ID from ticket description
+                request_id_match = re.search(r'Request ID:\s*(\d+)', ticket.description)
+                sf_request_id = request_id_match.group(1) if request_id_match else None
+
+                # Login to SAP
+                sap_auth = sync_requests.post(
+                    "http://207.180.217.117:4798/api/v1/auth/login",
+                    json={"username": "admin", "password": "admin123"},
+                    timeout=10
+                )
+                if sap_auth.status_code == 200:
+                    sap_token = sap_auth.json().get("access_token")
+                    # Create work order using the correct work-order-flow endpoint
+                    wo_payload = {
+                        "title": ticket.title,
+                        "description": ticket.description,
+                        "customer_name": "Salesforce Customer",
+                        "site_location": agent_response.result.get("location", "Not specified"),
+                        "requested_date": agent_response.result.get("scheduled_start", datetime.now().strftime("%Y-%m-%d")),
+                        "cost_center_id": "CC-DEFAULT",
+                        "created_by": "orchestrator",
+                        "materials": [],
+                        "priority": "medium",
+                        "crm_reference_id": sf_request_id or ""
+                    }
+                    wo_resp = sync_requests.post(
+                        "http://207.180.217.117:4798/api/v1/work-order-flow/work-orders",
+                        json=wo_payload,
+                        headers={"Authorization": f"Bearer {sap_token}"},
+                        timeout=10
+                    )
+                    if wo_resp.status_code in [200, 201]:
+                        wo_data = wo_resp.json()
+                        work_order_id = wo_data.get("work_order_id") or wo_data.get("id", "WO-UNKNOWN")
+                        agent_response.result["work_order_id"] = work_order_id
+                        logger.info(f"SAP work order created: {work_order_id} for ticket {ticket_id}")
+
+                        # Update materials check status based on agent validation
+                        validation = agent_response.result.get("validation_details", {})
+                        parts_validation = validation.get("parts_validation", {})
+                        parts_valid = validation.get("valid", True)
+                        all_available = parts_valid and parts_validation.get("status") != "unavailable"
+
+                        mat_status = {
+                            "all_available": all_available,
+                            "shortage_count": 0 if all_available else 1,
+                            "checked_by": "ai_agent",
+                            "details": parts_validation.get("status", "validated_by_agent")
+                        }
+                        mat_resp = sync_requests.patch(
+                            f"http://207.180.217.117:4798/api/v1/work-order-flow/work-orders/{work_order_id}/materials-status",
+                            json=mat_status,
+                            headers={"Authorization": f"Bearer {sap_token}"},
+                            timeout=10
+                        )
+                        if mat_resp.status_code in [200, 201]:
+                            logger.info(f"SAP work order {work_order_id} materials status updated: {'Available' if all_available else 'Shortage'}")
+                        else:
+                            logger.error(f"SAP materials status update failed: {mat_resp.status_code}")
+
+                        # If materials are short, create a ticket in SAP Tickets tab
+                        if not all_available:
+                            short_parts = parts_validation.get("unavailable_parts", [])
+                            short_details = parts_validation.get("details", "Materials shortage detected by AI agent")
+                            required_parts_str = wo_payload.get("description", "")
+                            # Extract required parts from ticket description
+                            import re as _re
+                            parts_match = _re.search(r'Required Parts:\s*(.+)', ticket.description, _re.IGNORECASE)
+                            parts_list = parts_match.group(1).strip() if parts_match else "See work order description"
+
+                            sap_ticket_payload = {
+                                "module": "MM",
+                                "ticket_type": "Procurement",
+                                "priority": ticket.priority.value,
+                                "title": f"Materials Shortage - Work Order {work_order_id}",
+                                "description": (
+                                    f"Materials shortage detected for Work Order: {work_order_id}\n"
+                                    f"ServiceNow Ticket: {ticket.servicenow_number}\n"
+                                    f"Customer: {wo_payload.get('customer_name', 'N/A')}\n"
+                                    f"Site Location: {wo_payload.get('site_location', 'N/A')}\n"
+                                    f"Required Parts: {parts_list}\n"
+                                    f"Shortage Details: {short_details}\n"
+                                    f"Unavailable Parts: {', '.join(short_parts) if short_parts else 'Check with warehouse'}\n\n"
+                                    f"Action Required: Procure missing materials for the work order."
+                                ),
+                                "created_by": "orchestrator"
+                            }
+                            tkt_resp = sync_requests.post(
+                                "http://207.180.217.117:4798/api/v1/tickets",
+                                json=sap_ticket_payload,
+                                headers={"Authorization": f"Bearer {sap_token}"},
+                                timeout=10
+                            )
+                            if tkt_resp.status_code in [200, 201]:
+                                sap_ticket_id = tkt_resp.json().get("ticket_id", "UNKNOWN")
+                                logger.info(f"SAP shortage ticket created: {sap_ticket_id} for work order {work_order_id}")
+                            else:
+                                logger.error(f"SAP shortage ticket creation failed: {tkt_resp.status_code} - {tkt_resp.text}")
+                    else:
+                        logger.error(f"SAP work order creation failed: {wo_resp.status_code} - {wo_resp.text}")
+                        agent_response.result["work_order_id"] = "CREATION_FAILED"
+                else:
+                    logger.error("Failed to authenticate with SAP for work order creation")
+                    agent_response.result["work_order_id"] = "AUTH_FAILED"
+
+                # Update Salesforce appointment request status
+                if sf_request_id:
+                    try:
+                        sf_auth = sync_requests.post(
+                            "http://207.180.217.117:4799/api/auth/login",
+                            json={"username": "admin", "password": "admin123"},
+                            timeout=10
+                        )
+                        if sf_auth.status_code == 200:
+                            sf_token = sf_auth.json().get("access_token")
+                            sf_update = {
+                                "status": "APPROVED",
+                                "sap_work_order_id": agent_response.result.get("work_order_id", ""),
+                                "orchestrator_ticket_id": ticket_id,
+                                "resolution_notes": f"Auto-approved by AI agent. SAP Work Order: {agent_response.result.get('work_order_id', 'N/A')}"
+                            }
+                            sf_resp = sync_requests.patch(
+                                f"http://207.180.217.117:4799/api/service/appointment-requests/{sf_request_id}/status",
+                                json=sf_update,
+                                headers={"Authorization": f"Bearer {sf_token}"},
+                                timeout=10
+                            )
+                            if sf_resp.status_code in [200, 201]:
+                                logger.info(f"Salesforce appointment request {sf_request_id} updated to APPROVED")
+                            else:
+                                logger.error(f"Salesforce update failed: {sf_resp.status_code} - {sf_resp.text}")
+                        else:
+                            logger.error("Failed to authenticate with Salesforce")
+                    except Exception as sf_err:
+                        logger.error(f"Error updating Salesforce: {sf_err}")
+
+            except Exception as e:
+                logger.error(f"Error creating SAP work order: {e}")
+                agent_response.result["work_order_id"] = "ERROR"
+
         # Update ServiceNow ticket
         ticket_dict = ticket_to_dict(db_get_ticket(ticket_id))
         ticket = OrchestrationTicket(**ticket_dict)
@@ -367,21 +640,28 @@ async def update_servicenow_ticket(ticket: OrchestrationTicket, status: str, age
     """
     Update ServiceNow ticket with resolution
     """
-    servicenow_url = "http://149.102.158.71:4780"
+    servicenow_url = "http://207.180.217.117:4780"
 
     # Build work notes based on ticket type
     if ticket.category.value == "password_reset" and status == "resolved":
-        # For password reset, include the generated password
-        password = agent_response.result.get("password", "N/A")
         email = agent_response.result.get("email", "N/A")
-        work_notes = f"""
-AI Agent - Password Reset Completed:
-Status: {status}
-New Password: {password}
-Email Notification Sent To: {email}
+        work_notes = f"""Password reset done successfully.
+Temporary password has been sent to {email}.
+User will be required to change password on first login.
+Orchestration Ticket: {ticket.id}"""
+    elif ticket.category.value == "work_order" and status == "resolved":
+        work_order_id = agent_response.result.get("work_order_id", "N/A")
+        work_notes = f"""AI Agent - Work Order Created:
+SAP Work Order ID: {work_order_id}
+Validation: Passed
 Actions: {', '.join(agent_response.actions_taken)}
-Orchestration Ticket: {ticket.id}
-        """
+Orchestration Ticket: {ticket.id}"""
+    elif ticket.category.value == "work_order" and status == "failed":
+        issues = agent_response.result.get("issues", [])
+        work_notes = f"""AI Agent - Work Order Validation Failed:
+Issues: {', '.join(issues) if issues else agent_response.error or 'Unknown'}
+Actions: {', '.join(agent_response.actions_taken)}
+Orchestration Ticket: {ticket.id}"""
     elif ticket.category.value == "user_creation" and status == "resolved":
         # For account creation, include approval status
         approved = agent_response.result.get("approved", False)
@@ -404,8 +684,8 @@ Result: {json.dumps(agent_response.result, indent=2)}
 Orchestration Ticket: {ticket.id}
         """
 
-    # For account creation approvals, update the tickets table instead of incidents
-    if ticket.category.value == "user_creation":
+    # For account creation and work order approvals, update the tickets table
+    if ticket.category.value in ("user_creation", "work_order"):
         update_data = {
             "status": "approved" if status == "resolved" else "rejected",
             "resolution_notes": work_notes
@@ -420,44 +700,55 @@ Orchestration Ticket: {ticket.id}
         endpoint = f"{servicenow_url}/api/now/table/incident/{ticket.servicenow_id}"
 
     try:
-        # Update ServiceNow via direct database connection (more reliable than API)
-        import subprocess
+        # Get ServiceNow auth token
+        import requests as sync_requests
+        token_resp = sync_requests.post(
+            f"{servicenow_url}/token",
+            data={"username": "admin@company.com", "password": "admin123"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=10
+        )
+        sn_token = token_resp.json().get("access_token") if token_resp.status_code == 200 else None
 
-        if ticket.category.value == "user_creation":
-            # Update tickets table for account creation
-            cmd = f'''docker exec postgres-servicenow psql -U postgres -d servicenow_db -c "UPDATE tickets SET status = '{update_data['status']}', resolution_notes = E'{update_data['resolution_notes']}', updated_at = NOW() WHERE id = {ticket.servicenow_id};"'''
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if not sn_token:
+            logger.error(f"Failed to get ServiceNow token for updating ticket {ticket.servicenow_number}")
+            return
 
-            if result.returncode == 0:
-                logger.info(f"✅ Updated ServiceNow ticket {ticket.servicenow_number} via DB (category: {ticket.category.value}, status: {status})")
+        headers = {"Authorization": f"Bearer {sn_token}", "Content-Type": "application/json"}
 
-                # Trigger ServiceNow webhook to MuleSoft
-                async with httpx.AsyncClient(timeout=5) as client:
-                    webhook_payload = {
-                        "ticket_number": ticket.servicenow_number,
-                        "status": update_data['status'],
-                        "approval_id": 0,
-                        "comments": update_data['resolution_notes'],
-                        "timestamp": datetime.now().isoformat() + "Z",
-                        "source": "orchestrator"
-                    }
-                    try:
-                        webhook_response = await client.post(
-                            "http://149.102.158.71:4797/api/webhooks/servicenow/approval-update",
-                            json=webhook_payload,
-                            headers={"Content-Type": "application/json"}
-                        )
-                        logger.info(f"📤 Webhook sent to MuleSoft: {webhook_response.status_code}")
-                    except Exception as webhook_error:
-                        logger.warning(f"⚠️ Webhook to MuleSoft failed: {webhook_error}")
+        if ticket.category.value in ("user_creation", "work_order"):
+            # Update ticket via ServiceNow API
+            resp = sync_requests.put(
+                f"{servicenow_url}/tickets/{ticket.servicenow_id}",
+                json=update_data,
+                headers=headers,
+                timeout=10
+            )
+
+            if resp.status_code in [200, 201]:
+                logger.info(f"Updated ServiceNow ticket {ticket.servicenow_number} (status: {update_data['status']})")
             else:
-                logger.error(f"❌ DB update failed: {result.stderr}")
+                logger.error(f"ServiceNow update failed: HTTP {resp.status_code} - {resp.text}")
         else:
-            # For incidents, use the API approach
-            logger.warning(f"⚠️ Incident updates not yet implemented via DB")
+            # For other tickets (password_reset, incidents), update via ticket status API
+            ticket_status_update = {
+                "status": "resolved" if status == "resolved" else "rejected",
+                "resolution_notes": work_notes
+            }
+            resp = sync_requests.patch(
+                f"{servicenow_url}/api/tickets/{ticket.servicenow_number}/status",
+                json=ticket_status_update,
+                headers=headers,
+                timeout=10
+            )
+
+            if resp.status_code in [200, 201]:
+                logger.info(f"Updated ServiceNow ticket {ticket.servicenow_number} (status: {status})")
+            else:
+                logger.error(f"ServiceNow ticket update failed: HTTP {resp.status_code} - {resp.text}")
 
     except Exception as e:
-        logger.error(f"❌ Failed to update ServiceNow ticket {ticket.servicenow_number}: {e}")
+        logger.error(f"Failed to update ServiceNow ticket {ticket.servicenow_number}: {e}")
 
 # ============================================================================
 # DASHBOARD & MONITORING ENDPOINTS

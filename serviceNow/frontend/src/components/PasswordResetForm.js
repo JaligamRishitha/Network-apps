@@ -38,7 +38,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 
 // ServiceNow API URL for ticket creation (NOT MuleSoft)
-const SERVICENOW_URL = process.env.REACT_APP_SERVICENOW_URL || 'http://149.102.158.71:4780';
+const SERVICENOW_URL = process.env.REACT_APP_SERVICENOW_URL || 'http://207.180.217.117:4780';
 
 const PasswordResetForm = () => {
   const navigate = useNavigate();
@@ -75,7 +75,7 @@ const PasswordResetForm = () => {
     const newErrors = {};
 
     if (!formData.username.trim()) {
-      newErrors.username = 'SAP Username is required';
+      newErrors.username = 'Username is required';
     }
 
     if (!formData.reason.trim()) {
@@ -100,7 +100,7 @@ const PasswordResetForm = () => {
     setLoading(true);
 
     try {
-      // Create a ticket in ServiceNow - SAP Admin will reset password manually
+      // Create a ticket in ServiceNow -  Admin will reset password manually
       const response = await fetch(`${SERVICENOW_URL}/api/tickets/auto-create`, {
         method: 'POST',
         headers: {
@@ -109,28 +109,21 @@ const PasswordResetForm = () => {
         body: JSON.stringify({
           event_type: 'password_reset',
           source_system: 'servicenow_self_service',
-          title: `SAP Password Reset Request: ${formData.username}`,
+          title: `Password Reset Request: ${formData.username}`,
           description: `Password Reset Request
 
-SAP Username: ${formData.username}
+Username: ${formData.username}
 Requested By: ${user?.full_name || 'Self-service User'}
 Email: ${formData.email || 'Not provided'}
 Contact Number: ${formData.contactNumber}
 Preferred Contact: ${formData.preferredContact}
 
 Reason for Reset:
-${formData.reason}
-
---- Instructions for SAP Admin ---
-1. Verify user identity by calling the contact number above
-2. Reset password in SAP using transaction SU01
-3. Generate temporary password and communicate securely to user
-4. Update this ticket with resolution details
-5. Ensure user changes password on first login`,
+${formData.reason}`,
           category: 'User Account',
           subcategory: 'Password Reset',
           priority: formData.urgency,
-          assignment_group: 'SAP User Management',
+          assignment_group: 'User Management',
           ticket_type: 'incident',
           sla_hours: formData.urgency === 'high' ? 4 : formData.urgency === 'critical' ? 1 : 24,
           affected_user: formData.username,
@@ -186,7 +179,7 @@ ${formData.reason}
   const flowSteps = [
     'Submit Request',
     'Ticket Created',
-    'SAP Admin Verifies',
+    'Validates Details',
     'Password Reset',
     'User Notified'
   ];
@@ -213,7 +206,7 @@ ${formData.reason}
           </IconButton>
           <LockResetIcon sx={{ mr: 2, fontSize: 32, color: '#8B1538' }} />
           <Typography variant="h4" sx={{ flexGrow: 1, color: '#333', fontWeight: 600 }}>
-            SAP Password Reset Request
+            Password Reset Request
           </Typography>
           <IconButton sx={{ color: '#FF8C42' }}>
             <FavoriteIcon />
@@ -221,8 +214,7 @@ ${formData.reason}
         </Box>
 
         <Typography variant="body1" color="text.secondary">
-          Submit a request to reset your SAP system password. A ticket will be created and
-          assigned to the SAP Administration team who will verify your identity and reset your password.
+          Submit a request to reset your account password. A ticket will be created and will verify your identity and reset your password.
         </Typography>
       </Box>
 
@@ -233,26 +225,25 @@ ${formData.reason}
             <Alert severity="info" sx={{ mb: 3 }}>
               <strong>How it works:</strong>
               <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
-                <li>Submit this form with your SAP username and contact details</li>
-                <li>A ticket is created and assigned to SAP Administration team</li>
-                <li>SAP Admin will call you to verify your identity</li>
-                <li>After verification, your password will be reset manually</li>
-                <li>You will receive a temporary password via your preferred contact method</li>
+                <li>Submit this form with your username and contact details</li>
+                <li>A ticket is created</li>
+                <li>After verification, your password is generated automatically</li>
+                <li>You will receive a temporary password via your email</li>
               </ol>
             </Alert>
 
             <form onSubmit={handleSubmit}>
               <Grid container spacing={3}>
-                {/* SAP Username */}
+                {/* Username */}
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
                     required
-                    label="SAP Username"
+                    label="Username"
                     value={formData.username}
                     onChange={(e) => handleInputChange('username', e.target.value)}
                     error={!!errors.username}
-                    helperText={errors.username || 'Enter your SAP system username'}
+                    helperText={errors.username || 'Enter your username'}
                     placeholder="e.g., jsmith"
                   />
                 </Grid>
@@ -333,9 +324,9 @@ ${formData.reason}
                       label="Preferred Contact Method"
                       onChange={(e) => handleInputChange('preferredContact', e.target.value)}
                     >
-                      <MenuItem value="phone">Phone Call (Most Secure)</MenuItem>
-                      <MenuItem value="teams">Microsoft Teams</MenuItem>
-                      <MenuItem value="in_person">In Person</MenuItem>
+                      <MenuItem value="phone">Email</MenuItem>
+                      <MenuItem value="teams">Phone Call</MenuItem>
+                      
                     </Select>
                   </FormControl>
                 </Grid>
@@ -460,23 +451,20 @@ ${formData.reason}
 
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Assigned To: {result.assignment_group || 'SAP User Management'}
+                  Assigned To: {result.assignment_group || 'User Management'}
                 </Typography>
               </Box>
 
               <Alert severity="info" sx={{ mt: 2 }}>
                 <strong>What happens next:</strong>
                 <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
-                  <li>SAP Admin will review your request</li>
-                  <li>They will call you to verify your identity</li>
+                  <li>Your request will be reviewed</li>
+                  <li>Verifies your identity</li>
                   <li>After verification, password will be reset</li>
                   <li>You'll receive the temporary password</li>
                 </ol>
               </Alert>
 
-              <Alert severity="warning" sx={{ mt: 2 }}>
-                <strong>Keep your phone available!</strong> SAP Admin will call for verification.
-              </Alert>
             </Box>
           ) : (
             <Box>

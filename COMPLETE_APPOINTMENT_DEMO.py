@@ -9,8 +9,8 @@ import json
 from datetime import datetime, timedelta
 
 # Configuration
-SALESFORCE_API = "http://149.102.158.71:4799"
-SERVICENOW_API = "http://149.102.158.71:4780"
+SALESFORCE_API = "http://207.180.217.117:4799"
+SERVICENOW_API = "http://207.180.217.117:4780"
 
 SALESFORCE_USER = "admin"
 SALESFORCE_PASSWORD = "admin123"

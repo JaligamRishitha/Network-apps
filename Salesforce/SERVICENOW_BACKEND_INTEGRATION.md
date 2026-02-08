@@ -53,7 +53,7 @@ GET    http://servicenow-backend:4780/health
 
 ### **1. Replace servicenow.py on Server**
 
-**On your server (149.102.158.71):**
+**On your server (207.180.217.117):**
 
 ```bash
 # Backup old file
@@ -106,7 +106,7 @@ The frontend is already configured correctly! No changes needed.
 **Existing frontend pages:**
 - ✅ `ServiceNowScenarios.jsx` - Create appointments/work orders
 - ✅ `ServiceNowTracking.jsx` - Track status
-- ✅ API calls go to: `http://149.102.158.71:4799`
+- ✅ API calls go to: `http://207.180.217.117:4799`
 
 ---
 
@@ -181,7 +181,7 @@ Expected response:
 
 1. **User creates appointment (Frontend)**
    ```
-   Frontend → POST http://149.102.158.71:4799/api/service/appointments
+   Frontend → POST http://207.180.217.117:4799/api/service/appointments
    ```
 
 2. **Backend creates ServiceNow incident**
@@ -201,12 +201,12 @@ Expected response:
 
 5. **Frontend shows in tracking**
    ```
-   Frontend → GET http://149.102.158.71:4799/api/service/scheduling-requests
+   Frontend → GET http://207.180.217.117:4799/api/service/scheduling-requests
    ```
 
 6. **Agent approves**
    ```
-   Frontend → POST http://149.102.158.71:4799/api/service/scheduling-requests/{id}/approve
+   Frontend → POST http://207.180.217.117:4799/api/service/scheduling-requests/{id}/approve
    Backend → POST http://servicenow-backend:4780/api/servicenow/approvals/{id}/approve
    ```
 

@@ -39,11 +39,8 @@ export default function MuleSoftIntegrationTab() {
   const getStatusColor = (status) => {
     const colors = {
       PENDING: 'bg-yellow-100 text-yellow-800',
-      APPROVED: 'bg-green-100 text-green-800',
+      VALIDATED: 'bg-blue-100 text-blue-800',
       COMPLETED: 'bg-green-100 text-green-800',
-      SENT_TO_SERVICENOW: 'bg-blue-100 text-blue-800',
-      PENDING_SERVICENOW_APPROVAL: 'bg-yellow-100 text-yellow-800',
-      REJECTED: 'bg-red-100 text-red-800',
       FAILED: 'bg-red-100 text-red-800'
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
@@ -52,11 +49,8 @@ export default function MuleSoftIntegrationTab() {
   const getStatusIcon = (status) => {
     const icons = {
       PENDING: '⏳',
-      APPROVED: '✅',
+      VALIDATED: '✔',
       COMPLETED: '✅',
-      SENT_TO_SERVICENOW: '📤',
-      PENDING_SERVICENOW_APPROVAL: '⏳',
-      REJECTED: '❌',
       FAILED: '❌'
     };
     return icons[status] || '•';
@@ -88,34 +82,28 @@ export default function MuleSoftIntegrationTab() {
       </div>
 
       {/* Status Summary */}
-      <div className="grid grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="bg-yellow-50 p-4 rounded border border-yellow-200">
           <div className="text-2xl font-bold text-yellow-600">
-            {requests.filter(r => r.status === 'PENDING').length}
+            {requests.filter(r => r.integration_status === 'PENDING').length}
           </div>
           <div className="text-sm text-yellow-700">Pending</div>
         </div>
         <div className="bg-blue-50 p-4 rounded border border-blue-200">
           <div className="text-2xl font-bold text-blue-600">
-            {requests.filter(r => r.integration_status === 'SENT_TO_SERVICENOW').length}
+            {requests.filter(r => r.integration_status === 'VALIDATED').length}
           </div>
-          <div className="text-sm text-blue-700">Sent to ServiceNow</div>
+          <div className="text-sm text-blue-700">Validated</div>
         </div>
         <div className="bg-green-50 p-4 rounded border border-green-200">
           <div className="text-2xl font-bold text-green-600">
-            {requests.filter(r => r.status === 'APPROVED' || r.integration_status === 'COMPLETED').length}
+            {requests.filter(r => r.integration_status === 'COMPLETED').length}
           </div>
-          <div className="text-sm text-green-700">Approved/Completed</div>
+          <div className="text-sm text-green-700">Completed</div>
         </div>
         <div className="bg-red-50 p-4 rounded border border-red-200">
           <div className="text-2xl font-bold text-red-600">
-            {requests.filter(r => r.status === 'REJECTED').length}
-          </div>
-          <div className="text-sm text-red-700">Rejected</div>
-        </div>
-        <div className="bg-red-50 p-4 rounded border border-red-200">
-          <div className="text-2xl font-bold text-red-600">
-            {requests.filter(r => r.status === 'FAILED').length}
+            {requests.filter(r => r.integration_status === 'FAILED').length}
           </div>
           <div className="text-sm text-red-700">Failed</div>
         </div>
@@ -131,7 +119,6 @@ export default function MuleSoftIntegrationTab() {
               <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
               <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Integration</th>
               <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">MuleSoft ID</th>
-              <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">ServiceNow</th>
               <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
             </tr>
           </thead>
@@ -171,12 +158,11 @@ export default function MuleSoftIntegrationTab() {
                     <td className="p-3 font-mono text-xs text-gray-600">
                       {req.mulesoft_transaction_id ? req.mulesoft_transaction_id.substring(0, 12) + '...' : '-'}
                     </td>
-                    <td className="p-3 text-sm">{req.servicenow_ticket_id || '-'}</td>
                     <td className="p-3 text-xs text-gray-500">{new Date(req.created_at).toLocaleString()}</td>
                   </tr>
                   {isExpanded && (
                     <tr>
-                      <td colSpan="7" className="px-4 py-4 bg-gray-50">
+                      <td colSpan="6" className="px-4 py-4 bg-gray-50">
                         <div className="grid grid-cols-3 gap-4 text-sm">
                           <div>
                             <span className="font-medium text-gray-700">Correlation ID:</span>
@@ -189,10 +175,6 @@ export default function MuleSoftIntegrationTab() {
                             <div className="mt-1 font-mono text-xs text-gray-600 break-all">
                               {req.mulesoft_transaction_id || '-'}
                             </div>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-700">ServiceNow Status:</span>
-                            <div className="mt-1 text-gray-600">{req.servicenow_status || '-'}</div>
                           </div>
                           <div>
                             <span className="font-medium text-gray-700">Requested By:</span>

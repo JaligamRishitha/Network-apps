@@ -11,7 +11,7 @@ All MCP servers have been updated with new tools and ServiceNow MCP switched to 
 ### 1. SAP MCP Server ✅
 - **File:** `/home/pradeep1a/Network-apps/SAP_clone/mcp_sap.py`
 - **Port:** 8092
-- **Mode:** Real (connects to http://149.102.158.71:4798)
+- **Mode:** Real (connects to http://207.180.217.117:4798)
 - **Status:** Ready
 - **Tools Added:** 10 new tools (validation + order management)
 
@@ -28,7 +28,7 @@ All MCP servers have been updated with new tools and ServiceNow MCP switched to 
 ### 3. Salesforce MCP Server ✅
 - **File:** `/home/pradeep1a/Network-apps/Salesforce/mcp_server.py`
 - **Port:** 8090
-- **Mode:** Real (connects to http://149.102.158.71:4799)
+- **Mode:** Real (connects to http://207.180.217.117:4799)
 - **Status:** Ready
 - **Tools:** Already has comprehensive CRM tools
 

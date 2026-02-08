@@ -56,7 +56,7 @@ const Login: React.FC = () => {
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         width: '400px'
       }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '24px' }}>SAP ERP Demo</h1>
+        <h1 style={{ textAlign: 'center', marginBottom: '24px' }}>SAP ERP</h1>
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '16px' }}>
@@ -82,7 +82,18 @@ const Login: React.FC = () => {
           </div>
 
           {error && (
-            <div style={{ color: 'red', marginBottom: '16px' }}>{error}</div>
+            <div style={{
+              padding: '12px 16px',
+              marginBottom: '16px',
+              borderRadius: '4px',
+              backgroundColor: error.toLowerCase().includes('expired') ? '#fff2e8' : '#fff1f0',
+              border: error.toLowerCase().includes('expired') ? '1px solid #ffbb96' : '1px solid #ffa39e',
+              color: error.toLowerCase().includes('expired') ? '#d4380d' : '#cf1322',
+              fontSize: '14px',
+            }}>
+              {error.toLowerCase().includes('expired') && <span style={{ marginRight: '8px' }}>&#9888;</span>}
+              {error}
+            </div>
           )}
 
           <button

@@ -104,7 +104,7 @@ Agents can now:
 
 Test the endpoint directly:
 ```bash
-curl -X POST http://149.102.158.71:4798/api/v1/auth/validate-user \
+curl -X POST http://207.180.217.117:4798/api/v1/auth/validate-user \
   -H "Content-Type: application/json" \
   -d '{"username": "engineer"}'
 ```
@@ -130,7 +130,7 @@ python mcp_sap.py
 
 ## API Endpoint Location
 
-**Full URL**: `http://149.102.158.71:4798/api/v1/auth/validate-user`
+**Full URL**: `http://207.180.217.117:4798/api/v1/auth/validate-user`
 
 **Method**: POST
 

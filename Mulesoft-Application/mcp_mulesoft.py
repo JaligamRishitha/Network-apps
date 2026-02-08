@@ -21,9 +21,9 @@ from mcp.types import TextContent
 # CONFIGURATION
 # ============================================================================
 
-BACKEND_API_URL = "http://149.102.158.71:8085/api"  # Original backend
-SAP_API_URL = "http://149.102.158.71:2004"  # SAP backend
-SERVICENOW_API_URL = "http://149.102.158.71:8003"  # ServiceNow backend
+BACKEND_API_URL = "http://207.180.217.117:8085/api"  # Original backend
+SAP_API_URL = "http://207.180.217.117:2004"  # SAP backend
+SERVICENOW_API_URL = "http://207.180.217.117:8003"  # ServiceNow backend
 MCP_HTTP_PORT = 8091  # Port for HTTP API
 
 # In-memory storage for demo (replace with database in production)
@@ -359,7 +359,7 @@ async def send_single_to_servicenow(request: SendToServiceNowRequest, connector_
                     "source_system": "Salesforce",
                     "request_id": request.request_id,
                     "account_name": request.account_name,
-                    "callback_url": f"http://149.102.158.71:8091/api/ticket-approval"
+                    "callback_url": f"http://207.180.217.117:8091/api/ticket-approval"
                 }
             }
             response = await client.post(f"{SERVICENOW_API_URL}/api/tickets", json=ticket_data)
@@ -847,7 +847,7 @@ async def mcp_send_to_servicenow(request_id: int, account_name: str, request_dat
                     "source_system": "Salesforce",
                     "request_id": request_id,
                     "account_name": account_name,
-                    "callback_url": f"http://149.102.158.71:8091/api/ticket-approval"
+                    "callback_url": f"http://207.180.217.117:8091/api/ticket-approval"
                 }
             }
             response = await client.post(f"{SERVICENOW_API_URL}/api/tickets", json=ticket_data)
@@ -1013,7 +1013,7 @@ def run_mcp_sse_server():
     def _run_sse():
         mcp_sse_app = create_mcp_sse_app()
         print(f"Starting MCP SSE Server on port {MCP_SSE_PORT}")
-        print(f"  SSE Endpoint: http://149.102.158.71:{MCP_SSE_PORT}/sse")
+        print(f"  SSE Endpoint: http://207.180.217.117:{MCP_SSE_PORT}/sse")
         uvicorn.run(mcp_sse_app, host="0.0.0.0", port=MCP_SSE_PORT, log_level="warning")
 
     sse_thread = threading.Thread(target=_run_sse, daemon=True)
@@ -1034,8 +1034,8 @@ if __name__ == "__main__":
     run_mcp_sse_server()
 
     print(f"\nStarting HTTP API on port {MCP_HTTP_PORT}")
-    print(f"  HTTP API: http://149.102.158.71:{MCP_HTTP_PORT}/api")
-    print(f"  MCP SSE:  http://149.102.158.71:{MCP_SSE_PORT}/sse")
+    print(f"  HTTP API: http://207.180.217.117:{MCP_HTTP_PORT}/api")
+    print(f"  MCP SSE:  http://207.180.217.117:{MCP_SSE_PORT}/sse")
     print("=" * 60)
 
     # Run main HTTP API

@@ -8,7 +8,7 @@ import requests
 import json
 
 # Configuration
-SERVICENOW_URL = "http://149.102.158.71:4780"
+SERVICENOW_URL = "http://207.180.217.117:4780"
 ORCHESTRATOR_URL = "http://localhost:2486/api/webhook/servicenow"
 
 # Business Rule Configuration
@@ -91,7 +91,7 @@ with open("/home/pradeep1a/Network-apps/servicenow_business_rule.js", "w") as f:
 print("📝 Manual Setup Instructions:")
 print("=" * 70)
 print()
-print("1. Login to ServiceNow: http://149.102.158.71:4780")
+print("1. Login to ServiceNow: http://207.180.217.117:4780")
 print()
 print("2. Navigate to: System Definition → Business Rules")
 print()

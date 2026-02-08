@@ -77,6 +77,9 @@ async def login(
     if not user.is_active:
         raise HTTPException(status_code=401, detail="User account is disabled")
 
+    if user.password_expired:
+        raise HTTPException(status_code=403, detail="Your password has expired. Please contact your administrator to reset it.")
+
     # Update last login
     user.last_login = datetime.utcnow()
     await db.commit()

@@ -42,13 +42,13 @@ python3 COMPLETE_APPOINTMENT_DEMO.py
 
 ```bash
 # Get list of all appointments
-TOKEN=$(curl -s -X POST http://149.102.158.71:4799/api/auth/login \
+TOKEN=$(curl -s -X POST http://207.180.217.117:4799/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}' | \
   python3 -c "import json, sys; print(json.load(sys.stdin)['access_token'])")
 
 curl -s -H "Authorization: Bearer $TOKEN" \
-  http://149.102.158.71:4799/api/service/scheduling-requests | \
+  http://207.180.217.117:4799/api/service/scheduling-requests | \
   python3 -m json.tool | grep -E "appointment_number|status" | head -20
 ```
 
@@ -56,13 +56,13 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 ```bash
 # Get ServiceNow token
-SNOW_TOKEN=$(curl -s -X POST http://149.102.158.71:4780/token \
+SNOW_TOKEN=$(curl -s -X POST http://207.180.217.117:4780/token \
   -d "username=admin@company.com&password=admin123" | \
   python3 -c "import json, sys; print(json.load(sys.stdin)['access_token'])")
 
 # List all tickets
 curl -s -H "Authorization: Bearer $SNOW_TOKEN" \
-  http://149.102.158.71:4780/tickets/ | \
+  http://207.180.217.117:4780/tickets/ | \
   python3 -m json.tool | head -50
 ```
 
@@ -82,8 +82,8 @@ import requests
 import json
 from datetime import datetime, timedelta
 
-SALESFORCE_API = "http://149.102.158.71:4799"
-SERVICENOW_API = "http://149.102.158.71:4780"
+SALESFORCE_API = "http://207.180.217.117:4799"
+SERVICENOW_API = "http://207.180.217.117:4780"
 
 def test_appointment_creation():
     """Create appointment and verify ticket"""

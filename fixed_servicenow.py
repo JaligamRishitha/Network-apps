@@ -16,7 +16,7 @@ class ServiceNowClient:
 
     def __init__(self):
         # ServiceNow Backend URL
-        self.base_url = os.getenv("SERVICENOW_BACKEND_URL", "http://149.102.158.71:4780")
+        self.base_url = os.getenv("SERVICENOW_BACKEND_URL", "http://207.180.217.117:4780")
         # ServiceNow credentials
         self.username = os.getenv("SERVICENOW_USERNAME", "admin@company.com")
         self.password = os.getenv("SERVICENOW_PASSWORD", "admin123")

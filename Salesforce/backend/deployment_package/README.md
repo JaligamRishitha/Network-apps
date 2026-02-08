@@ -91,18 +91,18 @@ kill <pid> && python -m uvicorn app.main:app --host 0.0.0.0 --port 4799
 ### Test Scenario 2
 ```bash
 # Check if appointments endpoint works
-curl -s "http://149.102.158.71:4799/api/service/appointments" \
+curl -s "http://207.180.217.117:4799/api/service/appointments" \
   -H "Authorization: Bearer <YOUR_TOKEN>"
 
 # Check if scheduling-requests endpoint works
-curl -s "http://149.102.158.71:4799/api/service/scheduling-requests" \
+curl -s "http://207.180.217.117:4799/api/service/scheduling-requests" \
   -H "Authorization: Bearer <YOUR_TOKEN>"
 ```
 
 ### Test Scenario 3
 ```bash
 # Check if work-orders endpoint works
-curl -s "http://149.102.158.71:4799/api/service/work-orders" \
+curl -s "http://207.180.217.117:4799/api/service/work-orders" \
   -H "Authorization: Bearer <YOUR_TOKEN>"
 ```
 
@@ -112,7 +112,7 @@ curl -s "http://149.102.158.71:4799/api/service/work-orders" \
 
 ### Scenario 2: Scheduling Callback
 ```bash
-curl -X POST "http://149.102.158.71:4799/api/service/scheduling-requests/1/mulesoft-callback" \
+curl -X POST "http://207.180.217.117:4799/api/service/scheduling-requests/1/mulesoft-callback" \
   -H "Content-Type: application/json" \
   -d '{
     "status": "SUCCESS",
@@ -127,7 +127,7 @@ curl -X POST "http://149.102.158.71:4799/api/service/scheduling-requests/1/mules
 
 ### Scenario 3: Work Order Callback
 ```bash
-curl -X POST "http://149.102.158.71:4799/api/service/work-orders/1/mulesoft-callback" \
+curl -X POST "http://207.180.217.117:4799/api/service/work-orders/1/mulesoft-callback" \
   -H "Content-Type: application/json" \
   -d '{
     "status": "SUCCESS",

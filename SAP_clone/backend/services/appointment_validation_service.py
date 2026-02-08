@@ -2,9 +2,10 @@
 Appointment Validation Service
 Validates appointment requests against SAP master data
 """
-from typing import Dict, List, Optional, Tuple
-from sqlalchemy.orm import Session
-from sqlalchemy import text, and_
+import re
+from typing import Dict, List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text, select, or_
 
 from backend.models.mm_models import Material
 from backend.models.pm_models import Asset, AssetStatus
@@ -14,10 +15,10 @@ from backend.models.fi_models import CostCenter
 class AppointmentValidationService:
     """Service to validate appointment requests against SAP master data"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
-    def validate_appointment_request(
+    async def validate_appointment_request(
         self,
         required_parts: Optional[str] = None,
         required_skills: Optional[str] = None,
@@ -51,7 +52,7 @@ class AppointmentValidationService:
 
         # 1. Validate Parts Availability
         if required_parts:
-            parts_result = self.validate_parts_availability(required_parts)
+            parts_result = await self.validate_parts_availability(required_parts)
             validation_result["parts_validation"] = parts_result
 
             if not parts_result["all_available"]:
@@ -63,7 +64,7 @@ class AppointmentValidationService:
 
         # 2. Validate Technician Skills
         if required_skills:
-            tech_result = self.validate_technician_availability(required_skills)
+            tech_result = await self.validate_technician_availability(required_skills)
             validation_result["technician_validation"] = tech_result
 
             if not tech_result["technicians_available"]:
@@ -78,7 +79,7 @@ class AppointmentValidationService:
 
         # 3. Validate Location/Asset
         if location:
-            location_result = self.validate_location(location)
+            location_result = await self.validate_location(location)
             validation_result["location_validation"] = location_result
 
             if not location_result["location_found"]:
@@ -88,7 +89,7 @@ class AppointmentValidationService:
 
         # 4. Validate Budget
         if cost_center_id and estimated_cost > 0:
-            budget_result = self.validate_budget(cost_center_id, estimated_cost)
+            budget_result = await self.validate_budget(cost_center_id, estimated_cost)
             validation_result["budget_validation"] = budget_result
 
             if not budget_result["budget_sufficient"]:
@@ -99,7 +100,7 @@ class AppointmentValidationService:
 
         return validation_result
 
-    def validate_parts_availability(self, required_parts: str) -> Dict:
+    async def validate_parts_availability(self, required_parts: str) -> Dict:
         """
         Check if required parts are available in inventory
 
@@ -126,10 +127,24 @@ class AppointmentValidationService:
         parts_list = [p.strip().lower() for p in required_parts.split(",")]
 
         for part_desc in parts_list:
-            # Search for materials matching description
-            materials = self.db.query(Material).filter(
-                Material.description.ilike(f"%{part_desc}%")
-            ).all()
+            # Strip trailing quantity/unit info like "(40 meters)", "(1 units)", "(2 nos)"
+            # so "33kV Underground Cable XLPE 3-Core 300mm² (40 meters)" becomes
+            # "33kV Underground Cable XLPE 3-Core 300mm²" which matches the DB
+            clean_desc = re.sub(r'\s*\(\d+\s*\w+\)\s*$', '', part_desc).strip()
+
+            # Search: try clean name first, fall back to original
+            search_terms = [clean_desc] if clean_desc != part_desc else []
+            search_terms.append(part_desc)
+
+            materials = []
+            for term in search_terms:
+                stmt = select(Material).filter(
+                    Material.description.ilike(f"%{term}%")
+                )
+                query_result = await self.db.execute(stmt)
+                materials = query_result.scalars().all()
+                if materials:
+                    break
 
             if not materials:
                 result["all_available"] = False
@@ -182,7 +197,7 @@ class AppointmentValidationService:
 
         return result
 
-    def validate_technician_availability(self, required_skills: str) -> Dict:
+    async def validate_technician_availability(self, required_skills: str) -> Dict:
         """
         Check if technicians with required skills are available
 
@@ -214,7 +229,8 @@ class AppointmentValidationService:
             WHERE availability_status = 'Available'
         """)
 
-        technicians = self.db.execute(query).fetchall()
+        query_result = await self.db.execute(query)
+        technicians = query_result.fetchall()
 
         for tech in technicians:
             tech_skills_lower = tech.skills.lower()
@@ -252,7 +268,7 @@ class AppointmentValidationService:
 
         return result
 
-    def validate_location(self, location: str) -> Dict:
+    async def validate_location(self, location: str) -> Dict:
         """
         Validate if location exists in SAP asset database
 
@@ -273,9 +289,11 @@ class AppointmentValidationService:
         }
 
         # Search for assets matching location
-        assets = self.db.query(Asset).filter(
+        stmt = select(Asset).filter(
             Asset.location.ilike(f"%{location}%")
-        ).all()
+        )
+        query_result = await self.db.execute(stmt)
+        assets = query_result.scalars().all()
 
         if assets:
             result["location_found"] = True
@@ -302,7 +320,7 @@ class AppointmentValidationService:
 
         return result
 
-    def validate_budget(self, cost_center_id: str, estimated_cost: float) -> Dict:
+    async def validate_budget(self, cost_center_id: str, estimated_cost: float) -> Dict:
         """
         Check if cost center has sufficient budget
 
@@ -326,9 +344,11 @@ class AppointmentValidationService:
         }
 
         # Query cost center
-        cost_center = self.db.query(CostCenter).filter(
+        stmt = select(CostCenter).filter(
             CostCenter.cost_center_id == cost_center_id
-        ).first()
+        )
+        query_result = await self.db.execute(stmt)
+        cost_center = query_result.scalars().first()
 
         if cost_center:
             available = float(cost_center.budget_allocated - cost_center.budget_spent)
@@ -350,16 +370,18 @@ class AppointmentValidationService:
 
         return result
 
-    def get_material_recommendations(self, asset_id: Optional[str] = None) -> List[Dict]:
+    async def get_material_recommendations(self, asset_id: Optional[str] = None) -> List[Dict]:
         """
         Get recommended materials based on asset type or common parts
 
         Returns list of commonly used materials
         """
         # Get top materials by quantity
-        materials = self.db.query(Material).filter(
+        stmt = select(Material).filter(
             Material.quantity > 0
-        ).order_by(Material.quantity.desc()).limit(10).all()
+        ).order_by(Material.quantity.desc()).limit(10)
+        query_result = await self.db.execute(stmt)
+        materials = query_result.scalars().all()
 
         recommendations = []
         for material in materials:
@@ -373,7 +395,7 @@ class AppointmentValidationService:
 
         return recommendations
 
-    def get_available_technicians(self, skill: Optional[str] = None) -> List[Dict]:
+    async def get_available_technicians(self, skill: Optional[str] = None) -> List[Dict]:
         """
         Get list of available technicians, optionally filtered by skill
 
@@ -391,7 +413,8 @@ class AppointmentValidationService:
 
         query_str += " ORDER BY certification_level DESC"
 
-        technicians = self.db.execute(text(query_str)).fetchall()
+        query_result = await self.db.execute(text(query_str))
+        technicians = query_result.fetchall()
 
         result = []
         for tech in technicians:

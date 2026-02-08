@@ -12,7 +12,7 @@ RUN npm install
 COPY . .
 
 # Expose port
-EXPOSE 3000
+EXPOSE 2003
 
 # Run the development server
 CMD ["npm", "run", "dev", "--", "--host"]

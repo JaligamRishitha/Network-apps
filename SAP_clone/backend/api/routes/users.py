@@ -189,6 +189,7 @@ async def change_password(
 
     # Update password (TODO: Hash password in production)
     user.password = request.new_password
+    user.password_expired = False
     user.updated_at = datetime.utcnow()
 
     await db.commit()

@@ -157,13 +157,13 @@ docker logs salesforce-backend --tail 20 | grep -i servicenow
 ### Check ServiceNow:
 ```bash
 # Get ServiceNow token
-TOKEN=$(curl -s -X POST http://149.102.158.71:4780/token \
+TOKEN=$(curl -s -X POST http://207.180.217.117:4780/token \
   -d "username=admin@company.com&password=admin123" | \
   python3 -c "import json, sys; print(json.load(sys.stdin)['access_token'])")
 
 # View tickets
 curl -H "Authorization: Bearer $TOKEN" \
-  http://149.102.158.71:4780/tickets/ | python3 -m json.tool
+  http://207.180.217.117:4780/tickets/ | python3 -m json.tool
 ```
 
 **Should see your appointment tickets!**
@@ -195,7 +195,7 @@ If you apply the fix and it still doesn't work:
 
 1. Check container is running: `docker ps | grep salesforce`
 2. Check logs: `docker logs salesforce-backend --tail 50`
-3. Verify ServiceNow is accessible: `curl http://149.102.158.71:4780/health`
+3. Verify ServiceNow is accessible: `curl http://207.180.217.117:4780/health`
 4. Test manually: `python3 COMPLETE_APPOINTMENT_DEMO.py`
 
 ---

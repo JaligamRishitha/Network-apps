@@ -8,7 +8,7 @@ import axios, { AxiosInstance, AxiosError } from 'axios';
 import logger from '../utils/logger';
 import { trackApiCall } from '../utils/performance';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:2004/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://207.180.217.117:4798/api/v1';
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
@@ -171,7 +171,7 @@ export const workOrderFlowApi = {
 export const passwordResetApi = {
   // GET /api/integration/password-reset-tickets - List pending password reset tickets
   listTickets: () => {
-    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:2004';
+    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://207.180.217.117:4798';
     const token = getAuthToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
     return apiCall(
@@ -182,7 +182,7 @@ export const passwordResetApi = {
   },
   // GET /api/integration/password-reset-tickets/{ticket_id} - Get specific ticket
   getTicket: (ticketId: string) => {
-    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:2004';
+    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://207.180.217.117:4798';
     const token = getAuthToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
     return apiCall(
@@ -193,7 +193,7 @@ export const passwordResetApi = {
   },
   // PATCH /api/integration/password-reset-tickets/{ticket_id}/status - Update status
   updateStatus: (ticketId: string, status: string, changedBy: string = 'admin') => {
-    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:2004';
+    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://207.180.217.117:4798';
     const token = getAuthToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
     return apiCall(
@@ -207,7 +207,7 @@ export const passwordResetApi = {
   },
   // POST /api/integration/password-reset-tickets/{id}/reset-password - Execute password reset
   resetPassword: (ticketId: string, changedBy: string = 'admin') => {
-    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:2004';
+    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://207.180.217.117:4798';
     const token = getAuthToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
     return apiCall(

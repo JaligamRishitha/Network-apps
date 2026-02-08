@@ -39,7 +39,7 @@ This guide explains how to configure your SAP ERP Demo application to use a remo
                       ▼
 ┌──────────────────────────────────────────────────┐
 │   Remote Backend Server                          │
-│   http://149.102.158.71:4798                     │
+│   http://207.180.217.117:4798                     │
 │                                                  │
 │   FastAPI + PostgreSQL                           │
 └──────────────────────────────────────────────────┘
@@ -91,7 +91,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      VITE_API_URL: http://149.102.158.71:4798/api/v1  # Remote backend URL
+      VITE_API_URL: http://207.180.217.117:4798/api/v1  # Remote backend URL
 ```
 
 **Key Points:**
@@ -106,7 +106,7 @@ services:
 **File:** `frontend/.env` (newly created)
 
 ```env
-VITE_API_URL=http://149.102.158.71:4798/api/v1
+VITE_API_URL=http://207.180.217.117:4798/api/v1
 ```
 
 **Why this is needed:**
@@ -123,7 +123,7 @@ VITE_API_URL=http://149.102.158.71:4798/api/v1
 **Updated the frontend section:**
 ```env
 # Frontend (pointing to remote backend)
-VITE_API_URL=http://149.102.158.71:4798/api/v1
+VITE_API_URL=http://207.180.217.117:4798/api/v1
 ```
 
 ---
@@ -160,7 +160,7 @@ Open your browser to `http://localhost:2003`
 1. Open browser DevTools (F12)
 2. Go to Network tab
 3. Try to login or perform any action
-4. Verify requests are going to `http://149.102.158.71:4798/api/v1/*`
+4. Verify requests are going to `http://207.180.217.117:4798/api/v1/*`
 
 ### 3. Test Login
 Use one of the demo users:
@@ -198,7 +198,7 @@ app.add_middleware(
 ### Issue: Connection refused
 
 **Solution:**
-1. Verify the remote backend is running: `curl http://149.102.158.71:4798/health`
+1. Verify the remote backend is running: `curl http://207.180.217.117:4798/health`
 2. Check firewall rules allow incoming connections on port 4798
 3. Verify the backend is listening on `0.0.0.0` not just `127.0.0.1`
 
@@ -252,7 +252,7 @@ If you need to switch back to running the backend locally:
 
 ## Notes
 
-- The remote backend URL is: `http://149.102.158.71:4798`
+- The remote backend URL is: `http://207.180.217.117:4798`
 - The API base path is: `/api/v1`
 - Frontend runs on port: `2003`
 - Make sure the remote backend is accessible from your network

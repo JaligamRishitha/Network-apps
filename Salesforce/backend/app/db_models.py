@@ -919,3 +919,77 @@ class WorkOrder(Base):
     case = relationship("Case", backref="work_orders")
     owner = relationship("User", foreign_keys=[owner_id], backref="owned_work_orders")
     requested_by = relationship("User", foreign_keys=[requested_by_id])
+
+
+class AppointmentRequestStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+class AppointmentRequest(Base):
+    """Appointment request awaiting approval via ServiceNow"""
+    __tablename__ = "appointment_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    subject = Column(String(255), nullable=False)
+    requested_payload = Column(JSON, nullable=True)
+    status = Column(String(50), default="PENDING")
+    correlation_id = Column(String(255), nullable=True, index=True)
+    servicenow_ticket_id = Column(String(255), nullable=True)
+    servicenow_ticket_number = Column(String(255), nullable=True)
+    sap_validation_result = Column(JSON, nullable=True)
+    error_message = Column(Text, nullable=True)
+    requested_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    requested_by = relationship("User", foreign_keys=[requested_by_id])
+
+
+class WorkOrderRequestStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+class ClientUser(Base):
+    """Client portal users linked to Salesforce accounts"""
+    __tablename__ = "client_users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    password_expired = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=False)
+    servicenow_ticket_id = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    account = relationship("Account", backref="client_users")
+
+
+class WorkOrderRequest(Base):
+    """Work order request awaiting approval via ServiceNow"""
+    __tablename__ = "work_order_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    subject = Column(String(255), nullable=False)
+    requested_payload = Column(JSON, nullable=True)
+    status = Column(String(50), default="PENDING")
+    correlation_id = Column(String(255), nullable=True, index=True)
+    servicenow_ticket_id = Column(String(255), nullable=True)
+    servicenow_ticket_number = Column(String(255), nullable=True)
+    sap_result = Column(JSON, nullable=True)
+    error_message = Column(Text, nullable=True)
+    requested_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    requested_by = relationship("User", foreign_keys=[requested_by_id])

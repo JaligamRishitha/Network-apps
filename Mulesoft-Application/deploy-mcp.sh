@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Deploy MCP Server to Remote Server
-SERVER_IP="149.102.158.71"
+SERVER_IP="207.180.217.117"
 MCP_PORT="8090"
 
 echo "Deploying MCP Server to $SERVER_IP:$MCP_PORT"

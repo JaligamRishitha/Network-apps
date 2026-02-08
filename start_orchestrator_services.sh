@@ -15,7 +15,7 @@ pkill -f servicenow_auto_forwarder_service.py 2>/dev/null
 sleep 2
 
 # Navigate to the correct directory
-cd /home/pradeep1a/Network-apps
+cd /root/rishitha/Network-apps
 
 # Start Ticket Orchestrator
 echo ""
@@ -71,7 +71,7 @@ echo "   • PID: $ORCH_PID"
 echo "   • Logs: tail -f ticket_orchestrator.log"
 echo ""
 echo "🔄 Auto-Forwarder:"
-echo "   • ServiceNow: http://149.102.158.71:4780"
+echo "   • ServiceNow: http://207.180.217.117:4780"
 echo "   • Target: http://localhost:2486"
 echo "   • PID: $FORWARD_PID"
 echo "   • Logs: tail -f servicenow_autoforward.log"

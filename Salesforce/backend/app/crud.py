@@ -61,18 +61,17 @@ def get_accounts(
 ) -> Tuple[List[models.Account], int]:
     query = db.query(models.Account).options(joinedload(models.Account.owner)).distinct()
 
-    # Only show accounts that are effectively approved:
-    # - accounts with no requests (legacy data), OR
-    # - accounts without any non-completed requests
-    non_completed_request_exists = (
+    # Only show accounts that have a linked creation request (any status)
+    # or legacy accounts with no request at all
+    pending_only_request_exists = (
         db.query(models.AccountCreationRequest.id)
         .filter(
             models.AccountCreationRequest.created_account_id == models.Account.id,
-            models.AccountCreationRequest.status != models.AccountRequestStatus.COMPLETED.value,
+            models.AccountCreationRequest.status == models.AccountRequestStatus.PENDING.value,
         )
         .exists()
     )
-    query = query.filter(~non_completed_request_exists)
+    query = query.filter(~pending_only_request_exists)
 
     if search:
         query = query.filter(

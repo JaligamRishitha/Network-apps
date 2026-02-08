@@ -13,9 +13,11 @@ interface Ticket {
   priority: string;
   status: string;
   title: string;
+  description?: string;
   sla_deadline: string;
   created_at: string;
   created_by: string;
+  assigned_to?: string;
 }
 
 interface PasswordResetTicket {
@@ -71,6 +73,7 @@ const Tickets: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ module: '', status: '' });
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [viewTicket, setViewTicket] = useState<Ticket | null>(null);
   const [passwordModal, setPasswordModal] = useState<{
     show: boolean;
     username: string;
@@ -341,10 +344,20 @@ const Tickets: React.FC = () => {
                     <td style={{ padding: '12px' }}>
                       {new Date(ticket.created_at).toLocaleDateString()}
                     </td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>-</td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                      <button
+                        onClick={() => setViewTicket(ticket)}
+                        style={{
+                          padding: '6px 12px', backgroundColor: '#1890ff', color: 'white',
+                          border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px'
+                        }}
+                      >
+                        View
+                      </button>
+                    </td>
                   </tr>
                 ))}
-                
+
                 {filteredPasswordTickets.length === 0 && filteredRegularTickets.length === 0 && (
                   <tr>
                     <td colSpan={7} style={{ padding: '24px', textAlign: 'center' }}>No tickets found</td>
@@ -363,6 +376,65 @@ const Tickets: React.FC = () => {
           </span>
         </div>
       </div>
+
+      {/* Ticket View Modal */}
+      {viewTicket && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
+          justifyContent: 'center', alignItems: 'center', zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white', borderRadius: '8px', padding: '0',
+            width: '580px', maxHeight: '80vh', overflow: 'auto',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+          }}>
+            {/* Header */}
+            <div style={{
+              backgroundColor: '#1890ff', color: 'white', padding: '14px 20px',
+              borderRadius: '8px 8px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+            }}>
+              <span style={{ fontWeight: 600, fontSize: '15px' }}>Ticket Details - {viewTicket.ticket_id}</span>
+              <button onClick={() => setViewTicket(null)} style={{
+                background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer'
+              }}>×</button>
+            </div>
+            {/* Body */}
+            <div style={{ padding: '20px' }}>
+              <table style={{ width: '100%', fontSize: '13px' }}>
+                <tbody>
+                  <tr><td style={{ padding: '6px 8px', color: '#666', width: '140px', verticalAlign: 'top' }}>Title</td><td style={{ padding: '6px 8px', fontWeight: 500 }}>{viewTicket.title}</td></tr>
+                  <tr><td style={{ padding: '6px 8px', color: '#666', verticalAlign: 'top' }}>Module</td><td style={{ padding: '6px 8px' }}>{viewTicket.module}</td></tr>
+                  <tr><td style={{ padding: '6px 8px', color: '#666', verticalAlign: 'top' }}>Type</td><td style={{ padding: '6px 8px' }}>{viewTicket.ticket_type}</td></tr>
+                  <tr><td style={{ padding: '6px 8px', color: '#666', verticalAlign: 'top' }}>Priority</td><td style={{ padding: '6px 8px' }}><PriorityBadge priority={viewTicket.priority} /></td></tr>
+                  <tr><td style={{ padding: '6px 8px', color: '#666', verticalAlign: 'top' }}>Status</td><td style={{ padding: '6px 8px' }}><StatusBadge status={viewTicket.status} /></td></tr>
+                  <tr><td style={{ padding: '6px 8px', color: '#666', verticalAlign: 'top' }}>Created By</td><td style={{ padding: '6px 8px' }}>{viewTicket.created_by}</td></tr>
+                  {viewTicket.assigned_to && <tr><td style={{ padding: '6px 8px', color: '#666', verticalAlign: 'top' }}>Assigned To</td><td style={{ padding: '6px 8px' }}>{viewTicket.assigned_to}</td></tr>}
+                  <tr><td style={{ padding: '6px 8px', color: '#666', verticalAlign: 'top' }}>Created</td><td style={{ padding: '6px 8px' }}>{new Date(viewTicket.created_at).toLocaleString()}</td></tr>
+                  <tr><td style={{ padding: '6px 8px', color: '#666', verticalAlign: 'top' }}>SLA Deadline</td><td style={{ padding: '6px 8px' }}>{new Date(viewTicket.sla_deadline).toLocaleString()}</td></tr>
+                </tbody>
+              </table>
+
+              {/* Description */}
+              {viewTicket.description && (
+                <div style={{ marginTop: '16px' }}>
+                  <div style={{ fontWeight: 600, fontSize: '13px', color: '#1890ff', marginBottom: '8px', borderBottom: '1px solid #e8e8e8', paddingBottom: '4px' }}>Description</div>
+                  <div style={{ backgroundColor: '#f9f9f9', padding: '12px', borderRadius: '4px', fontSize: '12px', whiteSpace: 'pre-wrap', lineHeight: '1.6', maxHeight: '250px', overflow: 'auto', border: '1px solid #e8e8e8' }}>
+                    {viewTicket.description}
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Footer */}
+            <div style={{ padding: '12px 20px', borderTop: '1px solid #e8e8e8', textAlign: 'right' }}>
+              <button onClick={() => setViewTicket(null)} style={{
+                padding: '8px 24px', backgroundColor: '#1890ff', color: 'white',
+                border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 500
+              }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Password Generated Modal */}
       {passwordModal.show && (

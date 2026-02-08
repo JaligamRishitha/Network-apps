@@ -103,14 +103,10 @@ const PM: React.FC = () => {
     }
   };
 
-  const handleCheckMaterials = async (workOrderId: string) => {
-    try {
-      await workOrderFlowApi.checkMaterials(workOrderId, user?.username || 'system');
-      await loadData();
-      showSuccess('Materials check completed!');
-    } catch (error) {
-      showError('Failed to check materials');
-    }
+  const [viewWorkOrder, setViewWorkOrder] = useState<any | null>(null);
+
+  const handleViewWorkOrder = (wo: any) => {
+    setViewWorkOrder(wo);
   };
 
   const handleCreateEquipment = async (data: any) => {
@@ -401,12 +397,11 @@ const PM: React.FC = () => {
                         </td>
                         <td>
                           <button
-                            className="sap-toolbar-button"
+                            className="sap-toolbar-button primary"
                             style={{ padding: '4px 12px', fontSize: '12px' }}
-                            onClick={() => handleCheckMaterials(wo.work_order_id)}
-                            disabled={wo.flow_status !== 'received'}
+                            onClick={() => handleViewWorkOrder(wo)}
                           >
-                            Check Materials
+                            View
                           </button>
                         </td>
                       </tr>
@@ -446,6 +441,92 @@ const PM: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Work Order View Modal */}
+      {viewWorkOrder && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
+          justifyContent: 'center', alignItems: 'center', zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white', borderRadius: '8px', padding: '0',
+            width: '620px', maxHeight: '80vh', overflow: 'auto',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+          }}>
+            {/* Header */}
+            <div style={{
+              backgroundColor: '#0a6ed1', color: 'white', padding: '14px 20px',
+              borderRadius: '8px 8px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+            }}>
+              <span style={{ fontWeight: 600, fontSize: '15px' }}>Work Order Details - {viewWorkOrder.work_order_id}</span>
+              <button onClick={() => setViewWorkOrder(null)} style={{
+                background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer'
+              }}>×</button>
+            </div>
+            {/* Body */}
+            <div style={{ padding: '20px' }}>
+              {/* General Info */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontWeight: 600, fontSize: '13px', color: '#0a6ed1', marginBottom: '8px', borderBottom: '1px solid #e8e8e8', paddingBottom: '4px' }}>General Information</div>
+                <table style={{ width: '100%', fontSize: '13px' }}>
+                  <tbody>
+                    <tr><td style={{ padding: '4px 8px', color: '#666', width: '160px' }}>Title</td><td style={{ padding: '4px 8px', fontWeight: 500 }}>{viewWorkOrder.title}</td></tr>
+                    <tr><td style={{ padding: '4px 8px', color: '#666' }}>Customer</td><td style={{ padding: '4px 8px' }}>{viewWorkOrder.customer_name || 'N/A'}</td></tr>
+                    <tr><td style={{ padding: '4px 8px', color: '#666' }}>Status</td><td style={{ padding: '4px 8px' }}><span className={`sap-status ${viewWorkOrder.flow_status === 'materials_shortage' ? 'error' : viewWorkOrder.flow_status === 'completed' ? 'success' : 'info'}`}>{viewWorkOrder.flow_status?.replace(/_/g, ' ')}</span></td></tr>
+                    <tr><td style={{ padding: '4px 8px', color: '#666' }}>Materials Check</td><td style={{ padding: '4px 8px' }}>{viewWorkOrder.materials_check_summary ? (<span className={`sap-status ${viewWorkOrder.materials_check_summary.all_available ? 'success' : 'error'}`}>{viewWorkOrder.materials_check_summary.all_available ? 'Available' : 'Not Available / Short'}</span>) : (<span className="sap-status info">Not Checked</span>)}</td></tr>
+                    <tr><td style={{ padding: '4px 8px', color: '#666' }}>Created</td><td style={{ padding: '4px 8px' }}>{viewWorkOrder.created_at ? new Date(viewWorkOrder.created_at).toLocaleString() : 'N/A'}</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Salesforce Request Details - parsed from description */}
+              {viewWorkOrder.description && (() => {
+                const desc = viewWorkOrder.description || '';
+                const extract = (field: string) => {
+                  const match = desc.match(new RegExp(field + '\\s*:\\s*(.+)', 'i'));
+                  return match ? match[1].trim() : null;
+                };
+                const requestId = extract('Request ID');
+                const appointmentType = extract('Type');
+                const location = extract('Location') || viewWorkOrder.site_location;
+                const requiredParts = extract('Required Parts');
+                const scheduledStart = extract('Scheduled Start');
+                const scheduledEnd = extract('Scheduled End');
+                const descBlock = desc.split('Description:')[1]?.trim() || '';
+
+                return (
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontWeight: 600, fontSize: '13px', color: '#0a6ed1', marginBottom: '8px', borderBottom: '1px solid #e8e8e8', paddingBottom: '4px' }}>Salesforce Request Details</div>
+                    <table style={{ width: '100%', fontSize: '13px' }}>
+                      <tbody>
+                        {requestId && <tr><td style={{ padding: '4px 8px', color: '#666', width: '160px' }}>Request ID</td><td style={{ padding: '4px 8px', fontWeight: 500 }}>{requestId}</td></tr>}
+                        {appointmentType && <tr><td style={{ padding: '4px 8px', color: '#666' }}>Appointment Type</td><td style={{ padding: '4px 8px' }}>{appointmentType}</td></tr>}
+                        {location && <tr><td style={{ padding: '4px 8px', color: '#666' }}>Location</td><td style={{ padding: '4px 8px' }}>{location}</td></tr>}
+                        {requiredParts && <tr><td style={{ padding: '4px 8px', color: '#666' }}>Required Parts</td><td style={{ padding: '4px 8px' }}><span style={{ backgroundColor: '#f0f5ff', padding: '2px 8px', borderRadius: '4px', color: '#1d39c4' }}>{requiredParts}</span></td></tr>}
+                        {scheduledStart && <tr><td style={{ padding: '4px 8px', color: '#666' }}>Scheduled Start</td><td style={{ padding: '4px 8px' }}>{scheduledStart}</td></tr>}
+                        {scheduledEnd && <tr><td style={{ padding: '4px 8px', color: '#666' }}>Scheduled End</td><td style={{ padding: '4px 8px' }}>{scheduledEnd}</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+
+              {/* Full Description */}
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '13px', color: '#0a6ed1', marginBottom: '8px', borderBottom: '1px solid #e8e8e8', paddingBottom: '4px' }}>Full Description</div>
+                <div style={{ backgroundColor: '#f9f9f9', padding: '12px', borderRadius: '4px', fontSize: '12px', whiteSpace: 'pre-wrap', lineHeight: '1.6', maxHeight: '200px', overflow: 'auto', border: '1px solid #e8e8e8' }}>
+                  {viewWorkOrder.description || 'No description available'}
+                </div>
+              </div>
+            </div>
+            {/* Footer */}
+            <div style={{ padding: '12px 20px', borderTop: '1px solid #e8e8e8', textAlign: 'right' }}>
+              <button className="sap-toolbar-button primary" style={{ padding: '8px 24px' }} onClick={() => setViewWorkOrder(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SAP Dialogs */}
       <SAPDialog

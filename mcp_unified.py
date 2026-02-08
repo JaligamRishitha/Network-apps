@@ -20,22 +20,22 @@ from mcp.types import TextContent
 SERVICES = {
     "salesforce": {
         "name": "Salesforce CRM",
-        "base_url": "http://149.102.158.71:4799",
+        "base_url": "http://207.180.217.117:4799",
         "description": "CRM operations - Contacts, Accounts, Leads, Opportunities, Cases",
     },
     "mulesoft": {
         "name": "MuleSoft Integration",
-        "base_url": "http://149.102.158.71:4797",
+        "base_url": "http://207.180.217.117:4797",
         "description": "SAP integration via MuleSoft - Case sync, batch operations",
     },
     "servicenow": {
         "name": "ServiceNow ITSM",
-        "base_url": "http://149.102.158.71:4780",
+        "base_url": "http://207.180.217.117:4780",
         "description": "IT Service Management - Incidents, Changes, Problems, CMDB",
     },
     "sap": {
         "name": "SAP ERP",
-        "base_url": "http://149.102.158.71:4798",
+        "base_url": "http://207.180.217.117:4798",
         "description": "ERP operations - PM, MM, FI, Sales, Tickets",
     },
 }
@@ -261,6 +261,27 @@ async def sf_list_cases(skip: int = 0, limit: int = 50, search: str = ""):
     if search:
         params["search"] = search
     result = await api_call("salesforce", "GET", "/api/cases", params=params)
+    return [TextContent(type="text", text=json.dumps(result))]
+
+
+@server.call_tool()
+async def sf_validate_client_user(email: str):
+    """Validate whether a client user exists in Salesforce by email"""
+    result = await api_call("salesforce", "POST", "/api/client-users/validate", {"email": email})
+    return [TextContent(type="text", text=json.dumps(result))]
+
+
+@server.call_tool()
+async def sf_update_client_password(email: str, new_password: str):
+    """Update a Salesforce client user's password"""
+    result = await api_call("salesforce", "PATCH", f"/api/client-users/{email}/password", {"new_password": new_password})
+    return [TextContent(type="text", text=json.dumps(result))]
+
+
+@server.call_tool()
+async def sf_activate_client_user(user_id: int):
+    """Activate a Salesforce client user after approval"""
+    result = await api_call("salesforce", "PATCH", f"/api/client-users/{user_id}/activate")
     return [TextContent(type="text", text=json.dumps(result))]
 
 

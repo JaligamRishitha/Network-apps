@@ -150,9 +150,9 @@ async def create_account(
 
     # Send to MuleSoft → ServiceNow for approval
     if is_manager(current_user):
-        request = account_approval_integration.record_manager_audit(db, request, current_user)
+        request = await account_approval_integration.record_manager_audit(db, request, current_user)
     else:
-        request = account_approval_integration.record_user_submission(db, request, current_user)
+        request = await account_approval_integration.record_user_submission(db, request, current_user)
 
     log_action(
         action_type="ACCOUNT_REQUEST_CREATED",
@@ -168,7 +168,6 @@ async def create_account(
             "status": request.status,
             "integration_status": request.integration_status,
             "mulesoft_transaction_id": request.mulesoft_transaction_id,
-            "servicenow_ticket_id": request.servicenow_ticket_id,
             "created_at": request.created_at
         }
     }
@@ -225,9 +224,9 @@ async def approve_account_request(
         db_account = crud.create_account(db, account_data)
         
         # Update request status
-        request.status = AccountRequestStatus.APPROVED.value
+        request.status = AccountRequestStatus.COMPLETED.value
         request.created_account_id = db_account.id
-        request.integration_status = "APPROVED"
+        request.integration_status = "COMPLETED"
         db.commit()
         
         log_action(
@@ -248,6 +247,9 @@ async def approve_account_request(
         request.error_message = str(exc)
         db.commit()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+
+
+
 
 
 @router.post("/requests/{request_id}/mulesoft-accept", response_model=schemas.AccountCreateResult)
@@ -280,7 +282,6 @@ async def mulesoft_accept_account_request(
         request = crud.update_account_request_integration(
             db,
             request,
-            servicenow_status="COMPLETED",
             integration_status="COMPLETED",
         )
     except Exception:
@@ -325,8 +326,7 @@ async def mulesoft_callback_account_request(
         request = crud.update_account_request_integration(
             db,
             request,
-            integration_status="REJECTED_BY_MULESOFT",
-            servicenow_status=payload.status or "REJECTED",
+            integration_status="FAILED",
             error_message=payload.message,
         )
         log_action(
@@ -348,9 +348,7 @@ async def mulesoft_callback_account_request(
         request = crud.update_account_request_integration(
             db,
             request,
-            servicenow_status=payload.status or "COMPLETED",
             integration_status="COMPLETED",
-            error_message=payload.message,
         )
     except Exception:
         request = crud.fail_account_request(db, request, "MuleSoft callback failed")
@@ -437,7 +435,7 @@ async def reject_account_request(
     if request.status != AccountRequestStatus.PENDING.value:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request is not pending")
 
-    request = account_approval_integration.record_approval_outcome(db, request, approved=False, error_message=reason)
+    request = crud.update_account_request_integration(db, request, integration_status="FAILED", error_message=reason)
     request = crud.reject_account_request(db, request, current_user, reason=reason)
 
     log_action(

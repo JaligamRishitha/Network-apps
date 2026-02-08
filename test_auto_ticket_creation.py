@@ -10,8 +10,8 @@ print("\n" + "="*80)
 print(" AUTOMATIC SERVICENOW TICKET CREATION - COMPLETE TEST")
 print("="*80)
 
-SALESFORCE_BASE = "http://149.102.158.71:4799"
-SERVICENOW_BASE = "http://149.102.158.71:4780"
+SALESFORCE_BASE = "http://207.180.217.117:4799"
+SERVICENOW_BASE = "http://207.180.217.117:4780"
 
 # Step 1: Check backend health
 print("\n[1/5] Checking Backend Health...")

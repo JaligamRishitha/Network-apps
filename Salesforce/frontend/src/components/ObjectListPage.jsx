@@ -32,6 +32,7 @@ export default function ObjectListPage({
   onAssignLabel,
   selectedItems: externalSelectedItems,
   onSelectionChange,
+  rowExtraProps,
 }) {
   const navigate = useNavigate();
 
@@ -92,11 +93,7 @@ export default function ObjectListPage({
           uniqueItems.push(item);
         }
       }
-      // Filter accounts to only show NITRO INC and GDCC
-      const filteredItems = objectType === 'account'
-        ? uniqueItems.filter(item => ['NITRO INC', 'GDCC'].includes(item.name))
-        : uniqueItems;
-      setItems(filteredItems);
+      setItems(uniqueItems);
       setTotalPages(response.data.pages);
       setTotal(response.data.total);
     } catch (error) {
@@ -526,7 +523,7 @@ export default function ObjectListPage({
                       {displayColumns.map((column) => (
                         <td key={column.key} className={`px-3 ${densityClasses[density]} text-sm`}>
                           {column.render ? (
-                            column.render(item)
+                            column.render(item, rowExtraProps)
                           ) : column.key === displayColumns[0].key ? (
                             <span className="text-sf-blue-500 hover:underline font-medium">
                               {item[column.key] || '-'}

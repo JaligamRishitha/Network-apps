@@ -318,6 +318,45 @@ async def get_work_order(
         raise HTTPException(status_code=404, detail=f"Work order not found: {work_order_id}")
 
 
+@router.patch("/work-orders/{work_order_id}/materials-status")
+async def update_materials_status(
+    work_order_id: str,
+    request: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """Update work order materials check summary and flow status from agent validation."""
+    from sqlalchemy import select
+    from backend.models.work_order_flow_models import CRMWorkOrder
+
+    stmt = select(CRMWorkOrder).where(CRMWorkOrder.work_order_id == work_order_id)
+    result = await db.execute(stmt)
+    work_order = result.scalars().first()
+
+    if not work_order:
+        raise HTTPException(status_code=404, detail=f"Work order not found: {work_order_id}")
+
+    all_available = request.get("all_available", True)
+    materials_summary = {
+        "all_available": all_available,
+        "shortage_count": request.get("shortage_count", 0),
+        "checked_by": request.get("checked_by", "agent"),
+        "checked_at": datetime.now().isoformat(),
+        "details": request.get("details", "Validated by AI agent")
+    }
+    work_order.materials_check_summary = materials_summary
+
+    new_status = WorkOrderFlowStatus.MATERIALS_AVAILABLE if all_available else WorkOrderFlowStatus.MATERIALS_SHORTAGE
+    work_order.flow_status = new_status
+
+    await db.commit()
+
+    return {
+        "work_order_id": work_order_id,
+        "flow_status": new_status.value,
+        "materials_check_summary": materials_summary
+    }
+
+
 @router.post("/work-orders/{work_order_id}/check-materials", response_model=MaterialCheckResponse)
 async def check_materials(
     work_order_id: str,

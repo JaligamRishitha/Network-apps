@@ -9,7 +9,7 @@ Added appointment validation and orchestration tools to existing MCP servers ins
 ## 1. SAP MCP Server (`/home/pradeep1a/Network-apps/SAP_clone/mcp_sap.py`)
 
 **Port:** 8092
-**Base URL Fixed:** Changed from `http://149.102.158.71:2004` to `http://149.102.158.71:4798`
+**Base URL Fixed:** Changed from `http://207.180.217.117:2004` to `http://207.180.217.117:4798`
 
 ### New Tools Added (10 tools)
 
@@ -106,7 +106,7 @@ Added appointment validation and orchestration tools to existing MCP servers ins
 ## 3. Salesforce MCP Server (`/home/pradeep1a/Network-apps/Salesforce/mcp_server.py`)
 
 **Port:** 8090
-**Base URL:** `http://149.102.158.71:4799`
+**Base URL:** `http://207.180.217.117:4799`
 
 ### Status: No changes needed
 
@@ -224,10 +224,10 @@ if agent_decision["decision"] == "APPROVED":
 ### SAP MCP Server Base URL Fixed:
 ```python
 # Before
-API_BASE_URL = "http://149.102.158.71:2004"
+API_BASE_URL = "http://207.180.217.117:2004"
 
 # After
-API_BASE_URL = "http://149.102.158.71:4798"
+API_BASE_URL = "http://207.180.217.117:4798"
 ```
 
 ---

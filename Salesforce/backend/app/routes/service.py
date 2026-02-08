@@ -43,7 +43,6 @@ class ServiceAppointmentCreate(BaseModel):
     scheduled_end: Optional[str] = None
     priority: str = "Normal"
     location: Optional[str] = None
-    required_skills: Optional[str] = None
     required_parts: Optional[str] = None
 
 class WorkOrderCreate(BaseModel):
@@ -418,13 +417,39 @@ async def create_sla(
 @router.get("/appointments")
 async def list_service_appointments(
     skip: int = 0,
-    limit: int = 100,
+    page_size: int = 100,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """List all service appointments"""
-    appointments = db.query(ServiceAppointment).offset(skip).limit(limit).all()
-    return appointments
+    """List all submitted appointment requests"""
+    requests = (
+        db.query(AppointmentRequest)
+        .order_by(AppointmentRequest.created_at.desc())
+        .offset(skip)
+        .limit(page_size)
+        .all()
+    )
+
+    items = []
+    for req in requests:
+        payload = req.requested_payload or {}
+        items.append({
+            "id": req.id,
+            "appointment_number": f"APT-{req.id:06d}",
+            "subject": req.subject,
+            "appointment_type": payload.get("appointment_type", "Field Service"),
+            "scheduled_start": payload.get("scheduled_start"),
+            "scheduled_end": payload.get("scheduled_end"),
+            "priority": payload.get("priority", "Normal"),
+            "location": payload.get("location"),
+            "required_parts": payload.get("required_parts"),
+            "status": req.status,
+            "servicenow_ticket_id": req.servicenow_ticket_id,
+            "technician_name": None,
+            "created_at": req.created_at.isoformat() if req.created_at else None,
+        })
+
+    return {"items": items, "total": len(items)}
 
 
 @router.get("/appointments/{appointment_id}/available-technicians")
@@ -443,18 +468,12 @@ async def get_available_technicians_for_appointment(
     # Query SAP HR for available technicians
     sap_client = get_sap_client()
 
-    # Parse required skills if provided
-    skills = []
-    if appointment.required_skills:
-        skills = [skill.strip() for skill in appointment.required_skills.split(",")]
-
     # Get scheduled date
     scheduled_date = appointment.scheduled_start.isoformat() if appointment.scheduled_start else None
 
     # Query SAP HR
     result = await sap_client.get_available_technicians(
         scheduled_date=scheduled_date,
-        skills_required=skills if skills else None,
         location=appointment.location
     )
 
@@ -580,18 +599,12 @@ async def get_available_technicians_for_request(
     # Query SAP HR for available technicians
     sap_client = get_sap_client()
 
-    # Parse required skills if provided
-    skills = []
-    if payload.get("required_skills"):
-        skills = [skill.strip() for skill in payload["required_skills"].split(",")]
-
     # Get scheduled date
     scheduled_date = payload.get("scheduled_start")
 
     # Query SAP HR
     result = await sap_client.get_available_technicians(
         scheduled_date=scheduled_date,
-        skills_required=skills if skills else None,
         location=payload.get("location")
     )
 
@@ -641,7 +654,6 @@ async def create_service_appointment(
         "scheduled_end": data.scheduled_end,
         "priority": data.priority,
         "location": data.location,
-        "required_skills": data.required_skills,
         "required_parts": data.required_parts
     }
 
@@ -672,7 +684,6 @@ Service Appointment Request from Salesforce
 Request ID: {appointment_request.id}
 Type: {data.appointment_type}
 Location: {data.location or 'Not specified'}
-Required Skills: {data.required_skills or 'Not specified'}
 Required Parts: {data.required_parts or 'Not specified'}
 
 Scheduled Start: {data.scheduled_start or 'Not specified'}
@@ -741,6 +752,49 @@ async def list_scheduling_requests(
 
     requests = query.order_by(AppointmentRequest.created_at.desc()).offset(skip).limit(limit).all()
     return requests
+
+
+@router.patch("/appointment-requests/{request_id}/status")
+async def update_appointment_request_status(
+    request_id: int,
+    update_data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Callback endpoint for orchestrator to update appointment request status"""
+    appointment_request = db.query(AppointmentRequest).filter(AppointmentRequest.id == request_id).first()
+    if not appointment_request:
+        raise HTTPException(status_code=404, detail="Appointment request not found")
+
+    new_status = update_data.get("status")
+    if new_status:
+        appointment_request.status = new_status
+
+    sap_work_order_id = update_data.get("sap_work_order_id")
+    if sap_work_order_id:
+        appointment_request.sap_validation_result = {
+            "work_order_id": sap_work_order_id,
+            "orchestrator_ticket_id": update_data.get("orchestrator_ticket_id", ""),
+            "resolution_notes": update_data.get("resolution_notes", "")
+        }
+
+    appointment_request.servicenow_status = "approved" if new_status == "APPROVED" else "rejected"
+    appointment_request.updated_at = datetime.now()
+
+    db.commit()
+    db.refresh(appointment_request)
+
+    log_action(
+        action_type="APPOINTMENT_STATUS_CALLBACK",
+        user=current_user.username,
+        details=f"Appointment request #{request_id} updated to {new_status} via orchestrator callback. SAP WO: {sap_work_order_id or 'N/A'}",
+        status="success"
+    )
+
+    return {
+        "message": f"Appointment request {request_id} updated to {new_status}",
+        "request": appointment_request
+    }
 
 
 @router.post("/scheduling-requests/{request_id}/approve")
@@ -820,7 +874,6 @@ async def approve_scheduling_request(
         scheduled_end=datetime.fromisoformat(payload["scheduled_end"]) if payload.get("scheduled_end") else None,
         priority=payload.get("priority"),
         location=payload.get("location"),
-        required_skills=payload.get("required_skills"),
         required_parts=payload.get("required_parts"),
         assigned_technician_id=technician_id,
         technician_name=technician_name,
@@ -1231,6 +1284,32 @@ async def reject_scheduling_request(
         if appointment:
             appointment.status = "Rejected"
             appointment.updated_at = datetime.now()
+
+    # Update the corresponding appointment request's servicenow_status
+    appointment_request = db.query(AppointmentRequest).filter(AppointmentRequest.id == request_id).first()
+    if appointment_request:
+        appointment_request.status = "REJECTED"
+        appointment_request.servicenow_status = "rejected"
+        appointment_request.error_message = f"Agent rejected: {reason}"
+        appointment_request.updated_at = datetime.now()
+
+        # Update ServiceNow ticket status to rejected
+        if appointment_request.servicenow_ticket_id:
+            try:
+                servicenow_client = get_servicenow_client()
+                token = await servicenow_client._get_token()
+                if token:
+                    import httpx
+                    async with httpx.AsyncClient() as client:
+                        await client.patch(
+                            f"{servicenow_client.base_url}/api/tickets/{appointment_request.servicenow_ticket_id}/status",
+                            json={"status": "rejected", "resolution_notes": f"Agent rejected: {reason}"},
+                            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                            timeout=15
+                        )
+                        logger.info(f"ServiceNow ticket {appointment_request.servicenow_ticket_id} updated to rejected")
+            except Exception as e:
+                logger.error(f"Failed to update ServiceNow ticket: {e}")
 
     db.commit()
     db.refresh(scheduling_request)

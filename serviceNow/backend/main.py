@@ -441,7 +441,7 @@ def read_approvals(
 async def notify_mulesoft_approval_status(ticket_number: str, status: str, approval_id: int, comments: str = None):
     """Notify MuleSoft about approval status change"""
     # Use MuleSoft Platform Backend (port 4797), not MCP (port 8091)
-    mulesoft_url = os.getenv("MULESOFT_PLATFORM_URL", "http://149.102.158.71:4797")
+    mulesoft_url = os.getenv("MULESOFT_PLATFORM_URL", "http://207.180.217.117:4797")
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             payload = {
@@ -1320,7 +1320,7 @@ Solutions for common Microsoft Teams problems during meetings and calls.
 # MULESOFT INTEGRATION
 # ============================================================================
 
-MULESOFT_URL = os.getenv("MULESOFT_BASE_URL", "http://149.102.158.71:8091")
+MULESOFT_URL = os.getenv("MULESOFT_BASE_URL", "http://207.180.217.117:8091")
 
 
 @app.get("/api/mulesoft/health")
@@ -2776,9 +2776,10 @@ async def update_ticket_status_from_sap(
     status_mapping = {
         "completed": "resolved",
         "closed": "resolved",
-        "failed": "failed",
+        "failed": "rejected",
+        "rejected": "rejected",
         "in_progress": "in_progress",
-        "open": "open"
+        "open": "submitted"
     }
 
     new_status = payload.get("status", "").lower()

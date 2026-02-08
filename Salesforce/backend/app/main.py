@@ -6,7 +6,7 @@ import os
 import time
 
 from .database import engine, Base
-from .routes import auth, accounts, contacts, leads, opportunities, cases, dashboard, activities, logs, service, platform_events, sap_integration, mulesoft, mulesoft_integration, integration_tracking
+from .routes import auth, accounts, contacts, leads, opportunities, cases, dashboard, activities, logs, service, platform_events, sap_integration, mulesoft, mulesoft_integration, integration_tracking, client_users, client_auth
 from .logger import log_action
 
 
@@ -82,9 +82,11 @@ app.add_middleware(
         "http://localhost:8090",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8090",
-        "http://149.102.158.71:5173",
-        "http://149.102.158.71:4799",
-        "http://149.102.158.71:8090",
+        "http://207.180.217.117:5173",
+        "http://207.180.217.117:4799",
+        "http://207.180.217.117:8090",
+        "http://localhost:2005",
+        "http://207.180.217.117:2005",
         "*",  # Allow all origins for MCP connections
     ],
     allow_credentials=True,
@@ -108,6 +110,8 @@ app.include_router(sap_integration.router)
 app.include_router(mulesoft.router)
 app.include_router(mulesoft_integration.router)
 app.include_router(integration_tracking.router)
+app.include_router(client_users.router)
+app.include_router(client_auth.router)
 
 
 @app.get("/")

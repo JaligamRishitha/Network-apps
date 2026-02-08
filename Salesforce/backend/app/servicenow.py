@@ -23,9 +23,9 @@ class ServiceNowClient:
         self.timeout = 30
         self._token = None
 
-    async def _get_token(self) -> Optional[str]:
+    async def _get_token(self, force_refresh: bool = False) -> Optional[str]:
         """Get authentication token from ServiceNow"""
-        if self._token:
+        if self._token and not force_refresh:
             return self._token
 
         try:
@@ -42,13 +42,15 @@ class ServiceNowClient:
                 if response.status_code == 200:
                     data = response.json()
                     self._token = data.get("access_token")
-                    logger.info("✅ ServiceNow authentication successful")
+                    logger.info("ServiceNow authentication successful")
                     return self._token
                 else:
-                    logger.error(f"❌ ServiceNow authentication failed: {response.status_code}")
+                    logger.error(f"ServiceNow authentication failed: {response.status_code}")
+                    self._token = None
                     return None
         except Exception as e:
-            logger.error(f"❌ ServiceNow authentication error: {str(e)}")
+            logger.error(f"ServiceNow authentication error: {str(e)}")
+            self._token = None
             return None
 
     async def create_ticket(
@@ -101,7 +103,7 @@ class ServiceNowClient:
                 "Accept": "application/json"
             }
 
-            logger.info(f"🎫 Creating ServiceNow ticket: {short_description}")
+            logger.info(f"Creating ServiceNow ticket: {short_description}")
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -111,11 +113,24 @@ class ServiceNowClient:
                     timeout=self.timeout
                 )
 
+                # Retry with fresh token on 401 (expired token)
+                if response.status_code == 401:
+                    logger.info("Token expired, refreshing and retrying...")
+                    token = await self._get_token(force_refresh=True)
+                    if token:
+                        headers["Authorization"] = f"Bearer {token}"
+                        response = await client.post(
+                            f"{self.base_url}/tickets/",
+                            json=ticket_data,
+                            headers=headers,
+                            timeout=self.timeout
+                        )
+
                 if response.status_code in [200, 201]:
                     result = response.json()
                     ticket_number = result.get("ticket_number")
 
-                    logger.info(f"✅ ServiceNow ticket created: {ticket_number}")
+                    logger.info(f"ServiceNow ticket created: {ticket_number}")
 
                     return {
                         "success": True,
@@ -125,7 +140,7 @@ class ServiceNowClient:
                         "response": result
                     }
                 else:
-                    logger.error(f"❌ ServiceNow ticket creation failed: {response.status_code}")
+                    logger.error(f"ServiceNow ticket creation failed: {response.status_code}")
                     return {
                         "success": False,
                         "error": f"Failed to create ticket: {response.status_code}",

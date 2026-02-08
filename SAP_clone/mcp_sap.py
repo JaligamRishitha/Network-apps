@@ -8,10 +8,10 @@ import json
 import httpx
 from typing import Optional
 from mcp.server import Server
-from mcp.types import TextContent
+from mcp.types import TextContent, Tool
 
 # SAP Backend Configuration
-API_BASE_URL = "http://149.102.158.71:4798"
+API_BASE_URL = "http://207.180.217.117:4798"
 MCP_HOST = "0.0.0.0"
 MCP_PORT = 8092
 DEFAULT_TOKEN = None
@@ -65,7 +65,6 @@ async def api_call(
 # AUTHENTICATION TOOLS
 # ============================================================================
 
-@server.call_tool()
 async def sap_login(username: str, password: str):
     """Login to SAP and get JWT token"""
     result = await api_call(
@@ -78,7 +77,6 @@ async def sap_login(username: str, password: str):
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def sap_refresh_token(token: str):
     """Refresh SAP JWT token"""
     result = await api_call("POST", "/api/v1/auth/refresh", {"token": token})
@@ -87,7 +85,6 @@ async def sap_refresh_token(token: str):
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def validate_user_for_password_reset(username: str):
     """
     Validate if a user exists in SAP database for password reset.
@@ -106,7 +103,6 @@ async def validate_user_for_password_reset(username: str):
 # TICKET MANAGEMENT TOOLS
 # ============================================================================
 
-@server.call_tool()
 async def list_tickets(
     module: str = "",
     status: str = "",
@@ -126,14 +122,12 @@ async def list_tickets(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def get_ticket(ticket_id: str):
     """Get SAP ticket by ID"""
     result = await api_call("GET", f"/api/v1/tickets/{ticket_id}")
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def create_ticket(
     module: str,
     ticket_type: str,
@@ -155,7 +149,6 @@ async def create_ticket(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def update_ticket_status(
     ticket_id: str,
     new_status: str,
@@ -172,7 +165,6 @@ async def update_ticket_status(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def get_ticket_audit_trail(ticket_id: str):
     """Get audit trail for a SAP ticket"""
     result = await api_call("GET", f"/api/v1/tickets/{ticket_id}/audit")
@@ -183,7 +175,6 @@ async def get_ticket_audit_trail(ticket_id: str):
 # PLANT MAINTENANCE (PM) TOOLS
 # ============================================================================
 
-@server.call_tool()
 async def list_assets(
     asset_type: str = "",
     status: str = "",
@@ -200,14 +191,12 @@ async def list_assets(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def get_asset(asset_id: str):
     """Get SAP PM asset by ID"""
     result = await api_call("GET", f"/api/v1/pm/assets/{asset_id}")
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def create_asset(
     asset_type: str,
     name: str,
@@ -229,7 +218,6 @@ async def create_asset(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def list_maintenance_orders(
     asset_id: str = "",
     status: str = "",
@@ -246,7 +234,6 @@ async def list_maintenance_orders(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def create_maintenance_order(
     asset_id: str,
     order_type: str,
@@ -268,7 +255,6 @@ async def create_maintenance_order(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def create_incident(
     asset_id: str,
     fault_type: str,
@@ -292,7 +278,6 @@ async def create_incident(
 # MATERIALS MANAGEMENT (MM) TOOLS
 # ============================================================================
 
-@server.call_tool()
 async def list_materials(
     storage_location: str = "",
     below_reorder: bool = False,
@@ -307,14 +292,12 @@ async def list_materials(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def get_material(material_id: str):
     """Get SAP MM material by ID"""
     result = await api_call("GET", f"/api/v1/mm/materials/{material_id}")
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def create_material(
     description: str,
     quantity: int,
@@ -337,7 +320,6 @@ async def create_material(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def create_stock_transaction(
     material_id: str,
     quantity_change: int,
@@ -359,7 +341,6 @@ async def create_stock_transaction(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def get_material_transaction_history(
     material_id: str,
     limit: int = 20,
@@ -371,7 +352,6 @@ async def get_material_transaction_history(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def list_purchase_requisitions(
     material_id: str = "",
     status: str = "",
@@ -391,7 +371,6 @@ async def list_purchase_requisitions(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def create_purchase_requisition(
     material_id: str,
     quantity: int,
@@ -415,7 +394,6 @@ async def create_purchase_requisition(
 # FINANCE (FI) TOOLS
 # ============================================================================
 
-@server.call_tool()
 async def list_cost_centers(
     fiscal_year: int = 0,
     responsible_manager: str = "",
@@ -432,14 +410,12 @@ async def list_cost_centers(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def get_cost_center(cost_center_id: str):
     """Get SAP FI cost center by ID"""
     result = await api_call("GET", f"/api/v1/fi/cost-centers/{cost_center_id}")
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def create_cost_center(
     name: str,
     budget_amount: float,
@@ -462,7 +438,6 @@ async def create_cost_center(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def list_cost_entries(
     cost_center_id: str = "",
     ticket_id: str = "",
@@ -482,7 +457,6 @@ async def list_cost_entries(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def create_cost_entry(
     cost_center_id: str,
     amount: float,
@@ -505,7 +479,6 @@ async def create_cost_entry(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def list_approval_requests(
     cost_center_id: str = "",
     decision: str = "",
@@ -525,7 +498,6 @@ async def list_approval_requests(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def create_approval_request(
     cost_center_id: str,
     amount: float,
@@ -543,7 +515,6 @@ async def create_approval_request(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def approve_request(approval_id: str, decided_by: str, comment: str = ""):
     """Approve SAP FI approval request"""
     data = {"decided_by": decided_by, "comment": comment}
@@ -551,7 +522,6 @@ async def approve_request(approval_id: str, decided_by: str, comment: str = ""):
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def reject_request(approval_id: str, decided_by: str, comment: str = ""):
     """Reject SAP FI approval request"""
     data = {"decided_by": decided_by, "comment": comment}
@@ -563,7 +533,6 @@ async def reject_request(approval_id: str, decided_by: str, comment: str = ""):
 # SALES TOOLS
 # ============================================================================
 
-@server.call_tool()
 async def list_sales_orders(
     status: str = "",
     customer_id: str = "",
@@ -580,14 +549,12 @@ async def list_sales_orders(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def get_sales_order(order_id: str):
     """Get SAP sales order by ID"""
     result = await api_call("GET", f"/api/sales/orders/{order_id}")
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def create_sales_order(
     customer_id: str,
     customer_name: str,
@@ -607,14 +574,12 @@ async def create_sales_order(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def update_sales_order(order_id: str, **kwargs):
     """Update SAP sales order"""
     result = await api_call("PUT", f"/api/sales/orders/{order_id}", kwargs)
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def update_sales_order_status(order_id: str, status: str):
     """Update SAP sales order status (new, processing, shipped, delivered, cancelled)"""
     data = {"status": status}
@@ -623,10 +588,9 @@ async def update_sales_order_status(order_id: str, status: str):
 
 
 # ============================================================================
-# WORK ORDER FLOW TOOLS (PM → MM → FI Integration)
+# WORK ORDER FLOW TOOLS (PM -> MM -> FI Integration)
 # ============================================================================
 
-@server.call_tool()
 async def list_work_orders(
     flow_status: str = "",
     customer_name: str = "",
@@ -643,14 +607,12 @@ async def list_work_orders(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def get_work_order(work_order_id: str):
     """Get SAP work order by ID"""
     result = await api_call("GET", f"/api/v1/work-order-flow/work-orders/{work_order_id}")
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def create_work_order(
     title: str,
     description: str,
@@ -665,7 +627,7 @@ async def create_work_order(
     priority: str = "medium",
     assigned_to: str = "",
 ):
-    """Create SAP work order with materials for PM → MM → FI workflow"""
+    """Create SAP work order with materials for PM -> MM -> FI workflow"""
     data = {
         "title": title,
         "description": description,
@@ -687,7 +649,6 @@ async def create_work_order(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def check_work_order_materials(work_order_id: str, performed_by: str):
     """Send work order to MM for material availability check"""
     data = {"performed_by": performed_by}
@@ -695,7 +656,6 @@ async def check_work_order_materials(work_order_id: str, performed_by: str):
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def request_work_order_purchase(
     work_order_id: str,
     performed_by: str,
@@ -709,7 +669,6 @@ async def request_work_order_purchase(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def approve_work_order_purchase(
     work_order_id: str,
     approved: bool,
@@ -727,7 +686,6 @@ async def approve_work_order_purchase(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def proceed_work_order(work_order_id: str, performed_by: str):
     """Proceed with work order after materials confirmed available"""
     data = {"performed_by": performed_by}
@@ -735,7 +693,6 @@ async def proceed_work_order(work_order_id: str, performed_by: str):
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def start_work_order(
     work_order_id: str,
     performed_by: str,
@@ -749,7 +706,6 @@ async def start_work_order(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def complete_work_order(work_order_id: str, performed_by: str):
     """Complete work order"""
     data = {"performed_by": performed_by}
@@ -757,21 +713,18 @@ async def complete_work_order(work_order_id: str, performed_by: str):
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def get_work_order_history(work_order_id: str):
-    """Get flow history for a work order (PM → MM → FI transitions)"""
+    """Get flow history for a work order (PM -> MM -> FI transitions)"""
     result = await api_call("GET", f"/api/v1/work-order-flow/work-orders/{work_order_id}/history")
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def get_pending_purchase_work_orders():
     """Get work orders pending purchase request (materials shortage)"""
     result = await api_call("GET", "/api/v1/work-order-flow/work-orders/pending-purchase")
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def get_pending_approval_work_orders():
     """Get work orders pending FI approval"""
     result = await api_call("GET", "/api/v1/work-order-flow/work-orders/pending-approval")
@@ -782,7 +735,6 @@ async def get_pending_approval_work_orders():
 # CRM INTEGRATION TOOLS
 # ============================================================================
 
-@server.call_tool()
 async def sync_crm_case(
     case_id: str,
     case_number: str,
@@ -818,14 +770,12 @@ async def sync_crm_case(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def get_crm_case_status(case_id: str):
     """Get SAP work order status for a CRM case"""
     result = await api_call("GET", f"/api/v1/crm-integration/case-status/{case_id}")
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def crm_integration_health():
     """Check CRM integration health"""
     result = await api_call("GET", "/api/v1/crm-integration/health")
@@ -836,88 +786,54 @@ async def crm_integration_health():
 # APPOINTMENT VALIDATION TOOLS (For Agent)
 # ============================================================================
 
-@server.call_tool()
 async def validate_appointment(
     required_parts: str,
-    required_skills: str,
     location: str,
-    cost_center_id: str,
-    estimated_cost: float,
 ):
     """
     Validate appointment request against SAP master data.
-    Checks parts availability, technician skills, location, and budget.
+    Checks parts availability and location.
     Used by agent for appointment approval decisions.
     """
     data = {
         "required_parts": required_parts,
-        "required_skills": required_skills,
         "location": location,
-        "cost_center_id": cost_center_id,
-        "estimated_cost": estimated_cost,
     }
-    result = await api_call("POST", "/api/appointments/validate", data)
+    result = await api_call("POST", "/api/api/appointments/validate", data)
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def search_materials_by_query(query: str):
     """Search for materials in SAP inventory by keyword"""
-    result = await api_call("GET", "/api/appointments/parts/search", params={"query": query})
+    result = await api_call("GET", "/api/api/appointments/parts/search", params={"query": query})
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def find_available_technicians(required_skills: str = ""):
     """Find available engineers/technicians with optional skill filtering"""
     params = {}
     if required_skills:
         params["skill"] = required_skills
-    result = await api_call("GET", "/api/appointments/technicians/available", params=params)
+    result = await api_call("GET", "/api/api/appointments/technicians/available", params=params)
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
-async def validate_technician_skills(required_skills: str):
-    """Check if technicians with required skills are available"""
-    result = await api_call(
-        "GET",
-        "/api/appointments/technicians/validate",
-        params={"required_skills": required_skills}
-    )
-    return [TextContent(type="text", text=json.dumps(result))]
-
-
-@server.call_tool()
 async def search_location_assets(location: str):
     """Search for assets/locations in SAP by name or ID"""
     result = await api_call(
         "GET",
-        "/api/appointments/locations/search",
+        "/api/api/appointments/locations/search",
         params={"location": location}
     )
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
-async def check_cost_center_budget(cost_center_id: str, estimated_cost: float):
-    """Verify if cost center has sufficient budget for estimated cost"""
-    result = await api_call(
-        "GET",
-        "/api/appointments/budget/check",
-        params={"cost_center_id": cost_center_id, "estimated_cost": estimated_cost}
-    )
-    return [TextContent(type="text", text=json.dumps(result))]
-
-
-@server.call_tool()
 async def get_material_recommendations():
     """Get recommended materials for common appointment types"""
-    result = await api_call("GET", "/api/appointments/materials/recommendations")
+    result = await api_call("GET", "/api/api/appointments/materials/recommendations")
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def reserve_materials_for_work_order(
     work_order_id: str,
     material_id: str,
@@ -936,7 +852,6 @@ async def reserve_materials_for_work_order(
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-@server.call_tool()
 async def update_work_order_status(work_order_id: str, status: str, updated_by: str, notes: str = ""):
     """Update work order status and add notes"""
     data = {
@@ -953,7 +868,6 @@ async def update_work_order_status(work_order_id: str, status: str, updated_by: 
 # HEALTH CHECK
 # ============================================================================
 
-@server.call_tool()
 async def sap_health_check():
     """Check SAP backend health"""
     try:
@@ -962,6 +876,873 @@ async def sap_health_check():
     except Exception as e:
         return [TextContent(type="text", text=json.dumps({"status": "unhealthy", "error": str(e)}))]
 
+
+# ============================================================================
+# MCP TOOL REGISTRATION - list_tools and call_tool handlers
+# ============================================================================
+
+# Dispatch map: tool name -> function
+TOOL_DISPATCH = {
+    "sap_login": sap_login,
+    "sap_refresh_token": sap_refresh_token,
+    "validate_user_for_password_reset": validate_user_for_password_reset,
+    "list_tickets": list_tickets,
+    "get_ticket": get_ticket,
+    "create_ticket": create_ticket,
+    "update_ticket_status": update_ticket_status,
+    "get_ticket_audit_trail": get_ticket_audit_trail,
+    "list_assets": list_assets,
+    "get_asset": get_asset,
+    "create_asset": create_asset,
+    "list_maintenance_orders": list_maintenance_orders,
+    "create_maintenance_order": create_maintenance_order,
+    "create_incident": create_incident,
+    "list_materials": list_materials,
+    "get_material": get_material,
+    "create_material": create_material,
+    "create_stock_transaction": create_stock_transaction,
+    "get_material_transaction_history": get_material_transaction_history,
+    "list_purchase_requisitions": list_purchase_requisitions,
+    "create_purchase_requisition": create_purchase_requisition,
+    "list_cost_centers": list_cost_centers,
+    "get_cost_center": get_cost_center,
+    "create_cost_center": create_cost_center,
+    "list_cost_entries": list_cost_entries,
+    "create_cost_entry": create_cost_entry,
+    "list_approval_requests": list_approval_requests,
+    "create_approval_request": create_approval_request,
+    "approve_request": approve_request,
+    "reject_request": reject_request,
+    "list_sales_orders": list_sales_orders,
+    "get_sales_order": get_sales_order,
+    "create_sales_order": create_sales_order,
+    "update_sales_order": update_sales_order,
+    "update_sales_order_status": update_sales_order_status,
+    "list_work_orders": list_work_orders,
+    "get_work_order": get_work_order,
+    "create_work_order": create_work_order,
+    "check_work_order_materials": check_work_order_materials,
+    "request_work_order_purchase": request_work_order_purchase,
+    "approve_work_order_purchase": approve_work_order_purchase,
+    "proceed_work_order": proceed_work_order,
+    "start_work_order": start_work_order,
+    "complete_work_order": complete_work_order,
+    "get_work_order_history": get_work_order_history,
+    "get_pending_purchase_work_orders": get_pending_purchase_work_orders,
+    "get_pending_approval_work_orders": get_pending_approval_work_orders,
+    "sync_crm_case": sync_crm_case,
+    "get_crm_case_status": get_crm_case_status,
+    "crm_integration_health": crm_integration_health,
+    "validate_appointment": validate_appointment,
+    "search_materials_by_query": search_materials_by_query,
+    "find_available_technicians": find_available_technicians,
+    "search_location_assets": search_location_assets,
+    "get_material_recommendations": get_material_recommendations,
+    "reserve_materials_for_work_order": reserve_materials_for_work_order,
+    "update_work_order_status": update_work_order_status,
+    "sap_health_check": sap_health_check,
+}
+
+
+@server.list_tools()
+async def handle_list_tools():
+    """Return the list of available SAP tools"""
+    return [
+        # --- Authentication Tools ---
+        Tool(
+            name="sap_login",
+            description="Login to SAP and get JWT token",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "username": {"type": "string", "description": "SAP username"},
+                    "password": {"type": "string", "description": "SAP password"},
+                },
+                "required": ["username", "password"],
+            },
+        ),
+        Tool(
+            name="sap_refresh_token",
+            description="Refresh SAP JWT token",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "token": {"type": "string", "description": "Current JWT token to refresh"},
+                },
+                "required": ["token"],
+            },
+        ),
+        Tool(
+            name="validate_user_for_password_reset",
+            description="Validate if a user exists in SAP database for password reset. Returns whether the user exists and can proceed with password reset flow. This does not require authentication and is safe to call for user validation.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "username": {"type": "string", "description": "Username to validate"},
+                },
+                "required": ["username"],
+            },
+        ),
+        # --- Ticket Management Tools ---
+        Tool(
+            name="list_tickets",
+            description="List SAP tickets with optional filtering by module, status, priority",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "module": {"type": "string", "description": "Filter by module"},
+                    "status": {"type": "string", "description": "Filter by status"},
+                    "priority": {"type": "string", "description": "Filter by priority"},
+                    "page": {"type": "integer", "description": "Page number", "default": 1},
+                    "limit": {"type": "integer", "description": "Items per page", "default": 20},
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="get_ticket",
+            description="Get SAP ticket by ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "string", "description": "Ticket ID"},
+                },
+                "required": ["ticket_id"],
+            },
+        ),
+        Tool(
+            name="create_ticket",
+            description="Create new SAP ticket",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "module": {"type": "string", "description": "SAP module (PM, MM, FI, etc.)"},
+                    "ticket_type": {"type": "string", "description": "Type of ticket"},
+                    "priority": {"type": "string", "description": "Ticket priority"},
+                    "title": {"type": "string", "description": "Ticket title"},
+                    "created_by": {"type": "string", "description": "Creator username"},
+                    "description": {"type": "string", "description": "Ticket description", "default": ""},
+                },
+                "required": ["module", "ticket_type", "priority", "title", "created_by"],
+            },
+        ),
+        Tool(
+            name="update_ticket_status",
+            description="Update SAP ticket status",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "string", "description": "Ticket ID"},
+                    "new_status": {"type": "string", "description": "New status"},
+                    "changed_by": {"type": "string", "description": "User making the change"},
+                    "comment": {"type": "string", "description": "Status change comment", "default": ""},
+                },
+                "required": ["ticket_id", "new_status", "changed_by"],
+            },
+        ),
+        Tool(
+            name="get_ticket_audit_trail",
+            description="Get audit trail for a SAP ticket",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "string", "description": "Ticket ID"},
+                },
+                "required": ["ticket_id"],
+            },
+        ),
+        # --- Plant Maintenance (PM) Tools ---
+        Tool(
+            name="list_assets",
+            description="List SAP PM assets with optional filtering",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "asset_type": {"type": "string", "description": "Filter by asset type"},
+                    "status": {"type": "string", "description": "Filter by status"},
+                    "limit": {"type": "integer", "description": "Max results", "default": 20},
+                    "offset": {"type": "integer", "description": "Result offset", "default": 0},
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="get_asset",
+            description="Get SAP PM asset by ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "asset_id": {"type": "string", "description": "Asset ID"},
+                },
+                "required": ["asset_id"],
+            },
+        ),
+        Tool(
+            name="create_asset",
+            description="Create new SAP PM asset",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "asset_type": {"type": "string", "description": "Type of asset"},
+                    "name": {"type": "string", "description": "Asset name"},
+                    "location": {"type": "string", "description": "Asset location"},
+                    "installation_date": {"type": "string", "description": "Installation date"},
+                    "status": {"type": "string", "description": "Asset status", "default": "operational"},
+                    "description": {"type": "string", "description": "Asset description", "default": ""},
+                },
+                "required": ["asset_type", "name", "location", "installation_date"],
+            },
+        ),
+        Tool(
+            name="list_maintenance_orders",
+            description="List SAP PM maintenance orders",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "asset_id": {"type": "string", "description": "Filter by asset ID"},
+                    "status": {"type": "string", "description": "Filter by status"},
+                    "limit": {"type": "integer", "description": "Max results", "default": 20},
+                    "offset": {"type": "integer", "description": "Result offset", "default": 0},
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="create_maintenance_order",
+            description="Create SAP PM maintenance order",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "asset_id": {"type": "string", "description": "Asset ID"},
+                    "order_type": {"type": "string", "description": "Order type"},
+                    "description": {"type": "string", "description": "Order description"},
+                    "scheduled_date": {"type": "string", "description": "Scheduled date"},
+                    "created_by": {"type": "string", "description": "Creator username"},
+                    "priority": {"type": "string", "description": "Priority level", "default": "P3"},
+                },
+                "required": ["asset_id", "order_type", "description", "scheduled_date", "created_by"],
+            },
+        ),
+        Tool(
+            name="create_incident",
+            description="Create SAP PM incident",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "asset_id": {"type": "string", "description": "Asset ID"},
+                    "fault_type": {"type": "string", "description": "Type of fault"},
+                    "description": {"type": "string", "description": "Incident description"},
+                    "reported_by": {"type": "string", "description": "Reporter username"},
+                    "severity": {"type": "string", "description": "Severity level", "default": "P2"},
+                },
+                "required": ["asset_id", "fault_type", "description", "reported_by"],
+            },
+        ),
+        # --- Materials Management (MM) Tools ---
+        Tool(
+            name="list_materials",
+            description="List SAP MM materials",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "storage_location": {"type": "string", "description": "Filter by storage location"},
+                    "below_reorder": {"type": "boolean", "description": "Only show materials below reorder level", "default": False},
+                    "limit": {"type": "integer", "description": "Max results", "default": 20},
+                    "offset": {"type": "integer", "description": "Result offset", "default": 0},
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="get_material",
+            description="Get SAP MM material by ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "material_id": {"type": "string", "description": "Material ID"},
+                },
+                "required": ["material_id"],
+            },
+        ),
+        Tool(
+            name="create_material",
+            description="Create new SAP MM material",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "description": {"type": "string", "description": "Material description"},
+                    "quantity": {"type": "integer", "description": "Initial quantity"},
+                    "unit_of_measure": {"type": "string", "description": "Unit of measure"},
+                    "reorder_level": {"type": "integer", "description": "Reorder level threshold"},
+                    "storage_location": {"type": "string", "description": "Storage location"},
+                    "material_id": {"type": "string", "description": "Optional material ID", "default": ""},
+                },
+                "required": ["description", "quantity", "unit_of_measure", "reorder_level", "storage_location"],
+            },
+        ),
+        Tool(
+            name="create_stock_transaction",
+            description="Process SAP MM stock transaction (receipt, issue, transfer, adjustment)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "material_id": {"type": "string", "description": "Material ID"},
+                    "quantity_change": {"type": "integer", "description": "Quantity change (positive or negative)"},
+                    "transaction_type": {"type": "string", "description": "Transaction type (receipt, issue, transfer, adjustment)"},
+                    "performed_by": {"type": "string", "description": "User performing the transaction"},
+                    "reference_doc": {"type": "string", "description": "Reference document", "default": ""},
+                    "notes": {"type": "string", "description": "Transaction notes", "default": ""},
+                },
+                "required": ["material_id", "quantity_change", "transaction_type", "performed_by"],
+            },
+        ),
+        Tool(
+            name="get_material_transaction_history",
+            description="Get transaction history for a SAP MM material",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "material_id": {"type": "string", "description": "Material ID"},
+                    "limit": {"type": "integer", "description": "Max results", "default": 20},
+                    "offset": {"type": "integer", "description": "Result offset", "default": 0},
+                },
+                "required": ["material_id"],
+            },
+        ),
+        Tool(
+            name="list_purchase_requisitions",
+            description="List SAP MM purchase requisitions",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "material_id": {"type": "string", "description": "Filter by material ID"},
+                    "status": {"type": "string", "description": "Filter by status"},
+                    "cost_center_id": {"type": "string", "description": "Filter by cost center ID"},
+                    "limit": {"type": "integer", "description": "Max results", "default": 20},
+                    "offset": {"type": "integer", "description": "Result offset", "default": 0},
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="create_purchase_requisition",
+            description="Create SAP MM purchase requisition",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "material_id": {"type": "string", "description": "Material ID"},
+                    "quantity": {"type": "integer", "description": "Quantity to purchase"},
+                    "cost_center_id": {"type": "string", "description": "Cost center ID"},
+                    "justification": {"type": "string", "description": "Purchase justification"},
+                    "requested_by": {"type": "string", "description": "Requester username"},
+                },
+                "required": ["material_id", "quantity", "cost_center_id", "justification", "requested_by"],
+            },
+        ),
+        # --- Finance (FI) Tools ---
+        Tool(
+            name="list_cost_centers",
+            description="List SAP FI cost centers",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "fiscal_year": {"type": "integer", "description": "Filter by fiscal year", "default": 0},
+                    "responsible_manager": {"type": "string", "description": "Filter by responsible manager"},
+                    "limit": {"type": "integer", "description": "Max results", "default": 20},
+                    "offset": {"type": "integer", "description": "Result offset", "default": 0},
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="get_cost_center",
+            description="Get SAP FI cost center by ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "cost_center_id": {"type": "string", "description": "Cost center ID"},
+                },
+                "required": ["cost_center_id"],
+            },
+        ),
+        Tool(
+            name="create_cost_center",
+            description="Create SAP FI cost center",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Cost center name"},
+                    "budget_amount": {"type": "number", "description": "Budget amount"},
+                    "fiscal_year": {"type": "integer", "description": "Fiscal year"},
+                    "responsible_manager": {"type": "string", "description": "Responsible manager"},
+                    "cost_center_id": {"type": "string", "description": "Optional cost center ID", "default": ""},
+                    "description": {"type": "string", "description": "Cost center description", "default": ""},
+                },
+                "required": ["name", "budget_amount", "fiscal_year", "responsible_manager"],
+            },
+        ),
+        Tool(
+            name="list_cost_entries",
+            description="List SAP FI cost entries",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "cost_center_id": {"type": "string", "description": "Filter by cost center ID"},
+                    "ticket_id": {"type": "string", "description": "Filter by ticket ID"},
+                    "cost_type": {"type": "string", "description": "Filter by cost type"},
+                    "limit": {"type": "integer", "description": "Max results", "default": 20},
+                    "offset": {"type": "integer", "description": "Result offset", "default": 0},
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="create_cost_entry",
+            description="Create SAP FI cost entry",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "cost_center_id": {"type": "string", "description": "Cost center ID"},
+                    "amount": {"type": "number", "description": "Cost amount"},
+                    "cost_type": {"type": "string", "description": "Type of cost"},
+                    "created_by": {"type": "string", "description": "Creator username"},
+                    "ticket_id": {"type": "string", "description": "Associated ticket ID", "default": ""},
+                    "description": {"type": "string", "description": "Cost entry description", "default": ""},
+                },
+                "required": ["cost_center_id", "amount", "cost_type", "created_by"],
+            },
+        ),
+        Tool(
+            name="list_approval_requests",
+            description="List SAP FI approval requests",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "cost_center_id": {"type": "string", "description": "Filter by cost center ID"},
+                    "decision": {"type": "string", "description": "Filter by decision status"},
+                    "requested_by": {"type": "string", "description": "Filter by requester"},
+                    "limit": {"type": "integer", "description": "Max results", "default": 20},
+                    "offset": {"type": "integer", "description": "Result offset", "default": 0},
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="create_approval_request",
+            description="Create SAP FI approval request",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "cost_center_id": {"type": "string", "description": "Cost center ID"},
+                    "amount": {"type": "number", "description": "Requested amount"},
+                    "justification": {"type": "string", "description": "Request justification"},
+                    "requested_by": {"type": "string", "description": "Requester username"},
+                },
+                "required": ["cost_center_id", "amount", "justification", "requested_by"],
+            },
+        ),
+        Tool(
+            name="approve_request",
+            description="Approve SAP FI approval request",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "approval_id": {"type": "string", "description": "Approval request ID"},
+                    "decided_by": {"type": "string", "description": "Approver username"},
+                    "comment": {"type": "string", "description": "Approval comment", "default": ""},
+                },
+                "required": ["approval_id", "decided_by"],
+            },
+        ),
+        Tool(
+            name="reject_request",
+            description="Reject SAP FI approval request",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "approval_id": {"type": "string", "description": "Approval request ID"},
+                    "decided_by": {"type": "string", "description": "Rejector username"},
+                    "comment": {"type": "string", "description": "Rejection comment", "default": ""},
+                },
+                "required": ["approval_id", "decided_by"],
+            },
+        ),
+        # --- Sales Tools ---
+        Tool(
+            name="list_sales_orders",
+            description="List SAP sales orders",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "status": {"type": "string", "description": "Filter by status"},
+                    "customer_id": {"type": "string", "description": "Filter by customer ID"},
+                    "page": {"type": "integer", "description": "Page number", "default": 1},
+                    "page_size": {"type": "integer", "description": "Items per page", "default": 20},
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="get_sales_order",
+            description="Get SAP sales order by ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "order_id": {"type": "string", "description": "Sales order ID"},
+                },
+                "required": ["order_id"],
+            },
+        ),
+        Tool(
+            name="create_sales_order",
+            description="Create SAP sales order. Items should be a list of dicts with line_item, material_id, description, quantity, unit_price, total",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "customer_id": {"type": "string", "description": "Customer ID"},
+                    "customer_name": {"type": "string", "description": "Customer name"},
+                    "delivery_date": {"type": "string", "description": "Delivery date"},
+                    "items": {"type": "array", "description": "List of order line items", "items": {"type": "object"}},
+                    "currency": {"type": "string", "description": "Currency code", "default": "USD"},
+                },
+                "required": ["customer_id", "customer_name", "delivery_date", "items"],
+            },
+        ),
+        Tool(
+            name="update_sales_order",
+            description="Update SAP sales order",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "order_id": {"type": "string", "description": "Sales order ID"},
+                },
+                "required": ["order_id"],
+                "additionalProperties": True,
+            },
+        ),
+        Tool(
+            name="update_sales_order_status",
+            description="Update SAP sales order status (new, processing, shipped, delivered, cancelled)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "order_id": {"type": "string", "description": "Sales order ID"},
+                    "status": {"type": "string", "description": "New status"},
+                },
+                "required": ["order_id", "status"],
+            },
+        ),
+        # --- Work Order Flow Tools ---
+        Tool(
+            name="list_work_orders",
+            description="List SAP work orders with optional filtering by status or customer",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "flow_status": {"type": "string", "description": "Filter by flow status"},
+                    "customer_name": {"type": "string", "description": "Filter by customer name"},
+                    "limit": {"type": "integer", "description": "Max results", "default": 20},
+                    "offset": {"type": "integer", "description": "Result offset", "default": 0},
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="get_work_order",
+            description="Get SAP work order by ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "work_order_id": {"type": "string", "description": "Work order ID"},
+                },
+                "required": ["work_order_id"],
+            },
+        ),
+        Tool(
+            name="create_work_order",
+            description="Create SAP work order with materials for PM -> MM -> FI workflow",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string", "description": "Work order title"},
+                    "description": {"type": "string", "description": "Work order description"},
+                    "customer_name": {"type": "string", "description": "Customer name"},
+                    "site_location": {"type": "string", "description": "Site location"},
+                    "requested_date": {"type": "string", "description": "Requested completion date"},
+                    "cost_center_id": {"type": "string", "description": "Cost center ID"},
+                    "created_by": {"type": "string", "description": "Creator username"},
+                    "materials": {"type": "array", "description": "List of required materials", "items": {"type": "object"}},
+                    "crm_reference_id": {"type": "string", "description": "CRM case reference ID", "default": ""},
+                    "customer_contact": {"type": "string", "description": "Customer contact info", "default": ""},
+                    "priority": {"type": "string", "description": "Priority level", "default": "medium"},
+                    "assigned_to": {"type": "string", "description": "Assigned technician", "default": ""},
+                },
+                "required": ["title", "description", "customer_name", "site_location", "requested_date", "cost_center_id", "created_by", "materials"],
+            },
+        ),
+        Tool(
+            name="check_work_order_materials",
+            description="Send work order to MM for material availability check",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "work_order_id": {"type": "string", "description": "Work order ID"},
+                    "performed_by": {"type": "string", "description": "User performing the check"},
+                },
+                "required": ["work_order_id", "performed_by"],
+            },
+        ),
+        Tool(
+            name="request_work_order_purchase",
+            description="MM raises FI ticket for purchasing materials that are not available",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "work_order_id": {"type": "string", "description": "Work order ID"},
+                    "performed_by": {"type": "string", "description": "User performing the request"},
+                    "justification": {"type": "string", "description": "Purchase justification", "default": ""},
+                },
+                "required": ["work_order_id", "performed_by"],
+            },
+        ),
+        Tool(
+            name="approve_work_order_purchase",
+            description="FI approves or rejects work order purchase request",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "work_order_id": {"type": "string", "description": "Work order ID"},
+                    "approved": {"type": "boolean", "description": "Whether to approve (true) or reject (false)"},
+                    "decided_by": {"type": "string", "description": "Approver/rejector username"},
+                    "comment": {"type": "string", "description": "Decision comment", "default": ""},
+                },
+                "required": ["work_order_id", "approved", "decided_by"],
+            },
+        ),
+        Tool(
+            name="proceed_work_order",
+            description="Proceed with work order after materials confirmed available",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "work_order_id": {"type": "string", "description": "Work order ID"},
+                    "performed_by": {"type": "string", "description": "User proceeding with the order"},
+                },
+                "required": ["work_order_id", "performed_by"],
+            },
+        ),
+        Tool(
+            name="start_work_order",
+            description="Start working on work order",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "work_order_id": {"type": "string", "description": "Work order ID"},
+                    "performed_by": {"type": "string", "description": "User starting the work"},
+                    "scheduled_date": {"type": "string", "description": "Scheduled start date", "default": ""},
+                },
+                "required": ["work_order_id", "performed_by"],
+            },
+        ),
+        Tool(
+            name="complete_work_order",
+            description="Complete work order",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "work_order_id": {"type": "string", "description": "Work order ID"},
+                    "performed_by": {"type": "string", "description": "User completing the work"},
+                },
+                "required": ["work_order_id", "performed_by"],
+            },
+        ),
+        Tool(
+            name="get_work_order_history",
+            description="Get flow history for a work order (PM -> MM -> FI transitions)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "work_order_id": {"type": "string", "description": "Work order ID"},
+                },
+                "required": ["work_order_id"],
+            },
+        ),
+        Tool(
+            name="get_pending_purchase_work_orders",
+            description="Get work orders pending purchase request (materials shortage)",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        ),
+        Tool(
+            name="get_pending_approval_work_orders",
+            description="Get work orders pending FI approval",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        ),
+        # --- CRM Integration Tools ---
+        Tool(
+            name="sync_crm_case",
+            description="Sync a CRM case (e.g., from Salesforce) to SAP as a work order",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "case_id": {"type": "string", "description": "CRM case ID"},
+                    "case_number": {"type": "string", "description": "CRM case number"},
+                    "subject": {"type": "string", "description": "Case subject"},
+                    "description": {"type": "string", "description": "Case description"},
+                    "account_name": {"type": "string", "description": "Account/customer name"},
+                    "site_address": {"type": "string", "description": "Site address"},
+                    "priority": {"type": "string", "description": "Case priority", "default": "Medium"},
+                    "materials": {"type": "array", "description": "Required materials list", "items": {"type": "object"}, "default": []},
+                    "contact_name": {"type": "string", "description": "Contact person name", "default": ""},
+                    "owner_name": {"type": "string", "description": "Case owner name", "default": ""},
+                    "cost_center_id": {"type": "string", "description": "Cost center ID", "default": "CC-DEFAULT"},
+                    "operation": {"type": "string", "description": "Sync operation (CREATE, UPDATE)", "default": "CREATE"},
+                },
+                "required": ["case_id", "case_number", "subject", "description", "account_name", "site_address"],
+            },
+        ),
+        Tool(
+            name="get_crm_case_status",
+            description="Get SAP work order status for a CRM case",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "case_id": {"type": "string", "description": "CRM case ID"},
+                },
+                "required": ["case_id"],
+            },
+        ),
+        Tool(
+            name="crm_integration_health",
+            description="Check CRM integration health",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        ),
+        # --- Appointment Validation Tools ---
+        Tool(
+            name="validate_appointment",
+            description="Validate appointment request against SAP master data. Checks parts availability and location. Used by agent for appointment approval decisions.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "required_parts": {"type": "string", "description": "Required parts for the appointment"},
+                    "location": {"type": "string", "description": "Appointment location"},
+                },
+                "required": ["required_parts", "location"],
+            },
+        ),
+        Tool(
+            name="search_materials_by_query",
+            description="Search for materials in SAP inventory by keyword",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search keyword"},
+                },
+                "required": ["query"],
+            },
+        ),
+        Tool(
+            name="find_available_technicians",
+            description="Find available engineers/technicians with optional skill filtering",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "required_skills": {"type": "string", "description": "Filter by required skills", "default": ""},
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="search_location_assets",
+            description="Search for assets/locations in SAP by name or ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "location": {"type": "string", "description": "Location name or ID to search"},
+                },
+                "required": ["location"],
+            },
+        ),
+        Tool(
+            name="get_material_recommendations",
+            description="Get recommended materials for common appointment types",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        ),
+        Tool(
+            name="reserve_materials_for_work_order",
+            description="Reserve materials from inventory for a work order",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "work_order_id": {"type": "string", "description": "Work order ID"},
+                    "material_id": {"type": "string", "description": "Material ID to reserve"},
+                    "quantity": {"type": "integer", "description": "Quantity to reserve"},
+                    "required_date": {"type": "string", "description": "Date materials are required", "default": ""},
+                },
+                "required": ["work_order_id", "material_id", "quantity"],
+            },
+        ),
+        Tool(
+            name="update_work_order_status",
+            description="Update work order status and add notes",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "work_order_id": {"type": "string", "description": "Work order ID"},
+                    "status": {"type": "string", "description": "New status"},
+                    "updated_by": {"type": "string", "description": "User making the update"},
+                    "notes": {"type": "string", "description": "Status update notes", "default": ""},
+                },
+                "required": ["work_order_id", "status", "updated_by"],
+            },
+        ),
+        # --- Health Check ---
+        Tool(
+            name="sap_health_check",
+            description="Check SAP backend health",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        ),
+    ]
+
+
+@server.call_tool()
+async def handle_call_tool(name: str, arguments: dict):
+    """Dispatch tool calls to the correct function by name"""
+    if name not in TOOL_DISPATCH:
+        return [TextContent(type="text", text=json.dumps({"error": f"Unknown tool: {name}"}))]
+
+    func = TOOL_DISPATCH[name]
+
+    # Special handling for update_sales_order which uses **kwargs
+    if name == "update_sales_order":
+        order_id = arguments.pop("order_id", "")
+        return await func(order_id, **arguments)
+
+    return await func(**arguments)
+
+
+# ============================================================================
+# SERVER STARTUP
+# ============================================================================
 
 def run_http_server():
     """Run MCP server in HTTP/SSE mode for remote connections"""
@@ -1007,7 +1788,7 @@ def run_http_server():
     print(f"  Host: {MCP_HOST}")
     print(f"  Port: {MCP_PORT}")
     print(f"  API Backend: {API_BASE_URL}")
-    print(f"  SSE Endpoint: http://149.102.158.71:{MCP_PORT}/sse")
+    print(f"  SSE Endpoint: http://207.180.217.117:{MCP_PORT}/sse")
     uvicorn.run(app, host=MCP_HOST, port=MCP_PORT)
 
 

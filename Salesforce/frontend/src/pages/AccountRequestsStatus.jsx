@@ -54,21 +54,13 @@ export default function AccountRequestsStatus() {
 
   const getIntegrationStatusColor = (status) => {
     switch (status) {
-      case 'SENT_TO_SERVICENOW':
+      case 'PENDING':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'VALIDATED':
         return 'bg-blue-100 text-blue-800';
-      case 'PENDING_SERVICENOW_APPROVAL':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'PENDING_MULESOFT':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'APPROVED_BY_MULESOFT':
-        return 'bg-green-100 text-green-800';
       case 'COMPLETED':
         return 'bg-green-100 text-green-800';
-      case 'APPROVED':
-        return 'bg-green-100 text-green-800';
       case 'FAILED':
-        return 'bg-red-100 text-red-800';
-      case 'MULESOFT_SEND_FAILED':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -80,7 +72,7 @@ export default function AccountRequestsStatus() {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Account Creation Requests</h1>
-          <p className="text-sm text-gray-500">Track account creation requests sent through MuleSoft to ServiceNow</p>
+          <p className="text-sm text-gray-500">Track account creation requests sent through MuleSoft</p>
         </div>
         <button type="button" onClick={loadRequests} className="btn-outline flex items-center gap-2">
           <ArrowPathIcon className="w-4 h-4" />
@@ -106,7 +98,6 @@ export default function AccountRequestsStatus() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request Status</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Integration Status</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MuleSoft ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ServiceNow Ticket</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                 </tr>
               </thead>
@@ -152,21 +143,13 @@ export default function AccountRequestsStatus() {
                             <span className="text-gray-400">-</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {item.servicenow_ticket_id || <span className="text-gray-400">Pending</span>}
-                          {item.servicenow_status && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              Status: {item.servicenow_status}
-                            </div>
-                          )}
-                        </td>
                         <td className="px-4 py-3 text-sm text-gray-500">
                           {item.created_at ? new Date(item.created_at).toLocaleString() : '-'}
                         </td>
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan="7" className="px-4 py-4 bg-gray-50">
+                          <td colSpan="6" className="px-4 py-4 bg-gray-50">
                             <div className="grid grid-cols-2 gap-4 text-sm">
                               <div>
                                 <span className="font-medium text-gray-700">Correlation ID:</span>

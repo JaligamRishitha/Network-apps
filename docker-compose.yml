@@ -17,7 +17,6 @@ services:
       POSTGRES_DB: salesforce_crm
     volumes:
       - postgres_salesforce_data:/var/lib/postgresql/data
-      - ./Salesforce/database/salesforce/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U salesforce -d salesforce_crm"]
       interval: 5s
@@ -39,7 +38,6 @@ services:
       POSTGRES_DB: mulesoft_integration
     volumes:
       - postgres_mulesoft_data:/var/lib/postgresql/data
-      - ./Salesforce/database/mulesoft/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mulesoft -d mulesoft_integration"]
       interval: 5s
@@ -61,9 +59,8 @@ services:
       POSTGRES_DB: servicenow_db
     volumes:
       - postgres_servicenow_data:/var/lib/postgresql/data
-      - ./Salesforce/database/servicenow/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U servicenow -d servicenow_itsm"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d servicenow_db"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -171,9 +168,91 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres-servicenow:5432/servicenow_db
       MULESOFT_URL: http://mulesoft-backend:4797
+      MULESOFT_BASE_URL: http://mulesoft-backend:4797
     depends_on:
       postgres-servicenow:
         condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  # =============================================================================
+  # FRONTEND SERVICES
+  # =============================================================================
+
+  # Salesforce Frontend
+  salesforce-frontend:
+    build:
+      context: ./Salesforce/frontend
+      dockerfile: Dockerfile
+    container_name: salesforce-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - salesforce-backend
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  # ServiceNow Frontend
+  servicenow-frontend:
+    build:
+      context: ./serviceNow/frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: http://207.180.217.117:4780
+        REACT_APP_MULESOFT_URL: http://207.180.217.117:4797
+    container_name: servicenow-frontend
+    ports:
+      - "3003:3000"
+    depends_on:
+      - servicenow-backend
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  # SAP Clone Frontend
+  sap-frontend:
+    build:
+      context: ./SAP_clone/frontend
+      dockerfile: Dockerfile
+    container_name: sap-frontend
+    ports:
+      - "2003:2003"
+    environment:
+      VITE_API_URL: http://207.180.217.117:4798/api/v1
+    depends_on:
+      - sap-backend
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  # Client Portal Frontend
+  client-portal:
+    build:
+      context: ./ClientPortal
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://207.180.217.117:4799
+    container_name: client-portal
+    ports:
+      - "2005:80"
+    depends_on:
+      - salesforce-backend
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  # MuleSoft Frontend
+  mulesoft-frontend:
+    build:
+      context: ./Mulesoft-Application/Inte-platform/ui-dashboard
+      dockerfile: Dockerfile
+    container_name: mulesoft-frontend
+    ports:
+      - "3001:3000"
+    depends_on:
+      - mulesoft-backend
     restart: unless-stopped
     networks:
       - shared-network

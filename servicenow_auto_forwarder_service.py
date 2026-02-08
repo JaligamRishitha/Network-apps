@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 # CONFIGURATION
 # ============================================================================
 
-SERVICENOW_BACKEND_URL = "http://149.102.158.71:4780"
+SERVICENOW_BACKEND_URL = "http://207.180.217.117:4780"
 ORCHESTRATOR_URL = "http://localhost:2486"
 
 # Polling interval in seconds
@@ -51,8 +51,6 @@ class ServiceNowBackendClient:
     def __init__(self):
         self.base_url = SERVICENOW_BACKEND_URL
         self.token = None
-        self.mock_mode = False
-        self.mock_ticket_index = 0
 
     def login(self) -> bool:
         """Login to ServiceNow backend"""
@@ -69,16 +67,15 @@ class ServiceNowBackendClient:
 
             if response.status_code == 200:
                 self.token = response.json().get("access_token")
-                logger.info("✅ Connected to ServiceNow backend")
+                logger.info("Connected to ServiceNow backend")
                 return True
             else:
-                logger.warning("⚠️  ServiceNow auth failed, will retry...")
+                logger.warning("ServiceNow auth failed, will retry next poll...")
                 return False
 
         except Exception as e:
-            logger.warning(f"⚠️  ServiceNow connection failed, enabling mock mode")
-            self.mock_mode = True
-            return True
+            logger.warning(f"ServiceNow connection failed: {e}, will retry next poll...")
+            return False
 
     def fetch_incidents(self, limit: int = 200) -> List[Dict]:
         """Fetch recent tickets from ServiceNow backend"""
@@ -86,12 +83,7 @@ class ServiceNowBackendClient:
             if not self.login():
                 return []
 
-        # Use mock mode if enabled
-        if self.mock_mode:
-            return self._get_mock_incident()
-
         try:
-            # Fetch from /api/tickets which has the actual tickets data
             response = requests.get(
                 f"{self.base_url}/api/tickets",
                 params={"limit": limit, "skip": 0},
@@ -99,8 +91,8 @@ class ServiceNowBackendClient:
             )
 
             if response.status_code == 401:
-                # Token expired, re-login
                 logger.info("Token expired, re-authenticating...")
+                self.token = None
                 if self.login():
                     return self.fetch_incidents(limit)
                 return []
@@ -116,57 +108,8 @@ class ServiceNowBackendClient:
                 return []
 
         except Exception as e:
-            logger.error(f"❌ Failed to fetch incidents: {e}")
-            self.mock_mode = True
-            return self._get_mock_incident()
-
-    def _get_mock_incident(self) -> List[Dict]:
-        """Generate one mock incident per poll to simulate new tickets"""
-        mock_templates = [
-            {
-                "sys_id": f"mock_auto_{int(time.time())}_{self.mock_ticket_index}",
-                "number": f"INC{20000 + self.mock_ticket_index}",
-                "short_description": "Password reset - Alice Cooper Salesforce locked",
-                "description": "User alice.cooper@company.com is locked out of Salesforce. Urgent password reset needed.",
-                "priority": "2",
-                "state": "2",
-                "category": "User Account",
-                "subcategory": "Password Reset",
-                "updated_at": datetime.now().isoformat()
-            },
-            {
-                "sys_id": f"mock_auto_{int(time.time())}_{self.mock_ticket_index}",
-                "number": f"INC{20000 + self.mock_ticket_index}",
-                "short_description": "Create user account for Tom Wilson",
-                "description": "New employee Tom Wilson (tom.wilson@company.com) needs Salesforce and SAP accounts.",
-                "priority": "3",
-                "state": "2",
-                "category": "User Account",
-                "subcategory": "User Creation",
-                "updated_at": datetime.now().isoformat()
-            },
-            {
-                "sys_id": f"mock_auto_{int(time.time())}_{self.mock_ticket_index}",
-                "number": f"INC{20000 + self.mock_ticket_index}",
-                "short_description": "Deactivate account for departing employee",
-                "description": "Employee Sarah Brown (sarah.brown@company.com) is leaving. Deactivate all system access.",
-                "priority": "3",
-                "state": "2",
-                "category": "User Account",
-                "subcategory": "User Deactivation",
-                "updated_at": datetime.now().isoformat()
-            }
-        ]
-
-        # Generate one ticket per poll cycle, rotating through templates
-        ticket = mock_templates[self.mock_ticket_index % len(mock_templates)].copy()
-        self.mock_ticket_index += 1
-
-        # Only return a ticket every 3rd poll to simulate realistic frequency
-        if self.mock_ticket_index % 3 == 0:
-            logger.info(f"🎭 Mock mode: Generated test ticket {ticket['number']}")
-            return [ticket]
-        else:
+            logger.error(f"Failed to fetch incidents: {e}, will retry next poll...")
+            self.token = None
             return []
 
 # ============================================================================

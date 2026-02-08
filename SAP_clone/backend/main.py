@@ -1,8 +1,10 @@
 """SAP ERP Demo Backend - FastAPI Application Entry Point"""
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import get_settings
+from backend.db.database import init_db
 from backend.api.routes import (
     auth, tickets, pm, mm, fi, users,
     sales, inventory, finance, purchasing, production,
@@ -13,10 +15,19 @@ from backend.api.routes import (
 
 settings = get_settings()
 
+
+@asynccontextmanager
+async def lifespan(app):
+    # Startup: create all database tables
+    await init_db()
+    yield
+
+
 app = FastAPI(
     title="SAP ERP Demo",
     description="Demo-grade SAP-like ERP application with full SAP module coverage",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Configure CORS

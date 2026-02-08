@@ -73,7 +73,7 @@ In ServiceNow:
 (function executeRule(current, previous) {
     try {
         var r = new sn_ws.RESTMessageV2();
-        r.setEndpoint('http://149.102.158.71:5001/api/webhook/servicenow');
+        r.setEndpoint('http://207.180.217.117:5001/api/webhook/servicenow');
         r.setHttpMethod('POST');
         r.setRequestHeader('Content-Type', 'application/json');
 

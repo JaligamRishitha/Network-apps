@@ -231,6 +231,21 @@ class TicketResolver:
             except Exception as e:
                 results["sap"] = {"status": "failed", "error": str(e)}
 
+        # Check Salesforce client_users table
+        try:
+            validate_result = await self.mcp.call_tool("sf_validate_client_user", {"email": email})
+            if validate_result.get("exists"):
+                actions_taken.append("found_salesforce_client_user")
+                results["salesforce_client_user"] = {
+                    "status": "success",
+                    "client_user_id": validate_result.get("client_user_id"),
+                    "account_name": validate_result.get("account_name"),
+                }
+            else:
+                results["salesforce_client_user"] = {"status": "not_found"}
+        except Exception as e:
+            results["salesforce_client_user"] = {"status": "skipped", "error": str(e)}
+
         # Send email notification (simulated)
         actions_taken.append(f"sent_password_email_to_{email}")
         results["notification_sent"] = True
@@ -243,20 +258,67 @@ class TicketResolver:
 
     async def handle_user_creation(self, params: Dict, context: Dict) -> Dict:
         """
-        Handle account creation approval requests
-        For account creation tickets, auto-approve the request
-        Steps:
-        1. Detect account creation from context
-        2. Auto-approve the request
-        3. Return success response
+        Handle user/account creation approval requests.
+        Supports both account creation tickets and client user creation tickets.
+        For client user creation:
+        1. Login to Salesforce
+        2. Validate account exists
+        3. Return approved so orchestrator can activate the user
         """
         actions_taken = []
-
-        # Extract account name from context description
         description = context.get("description", "")
-        account_name = "Unknown Account"
 
-        # Parse account name from description
+        # Detect client user creation (has "Client User ID:" in description)
+        if "Client User ID:" in description:
+            import re
+            client_user_id = None
+            email = None
+            account_name = "Unknown Account"
+
+            match = re.search(r'Client User ID:\s*(\d+)', description)
+            if match:
+                client_user_id = match.group(1)
+            email_match = re.search(r'Email:\s*([\w\.\-\+]+@[\w\.\-]+\.\w+)', description)
+            if email_match:
+                email = email_match.group(1)
+            acct_match = re.search(r'Account:\s*(.+?)(?:\s*\(ID:|\n|$)', description)
+            if acct_match:
+                account_name = acct_match.group(1).strip()
+
+            actions_taken.append(f"Detected client user creation for: {email}")
+
+            # Login to Salesforce and validate the account
+            try:
+                login_result = await self.mcp.call_tool("login_salesforce", {
+                    "username": "admin", "password": "admin123"
+                })
+                if "access_token" in login_result:
+                    actions_taken.append("logged_into_salesforce")
+
+                if email:
+                    validate_result = await self.mcp.call_tool("sf_validate_client_user", {"email": email})
+                    actions_taken.append(f"validated_client_user_exists: {validate_result.get('exists', False)}")
+            except Exception as e:
+                actions_taken.append(f"validation_warning: {e}")
+
+            actions_taken.append("Auto-approved client user creation request")
+
+            return {
+                "status": "success",
+                "actions_taken": actions_taken,
+                "result": {
+                    "approved": True,
+                    "action": "client_user_creation",
+                    "client_user_id": client_user_id,
+                    "email": email,
+                    "account_name": account_name,
+                    "message": "Client user creation request approved",
+                    "auto_approved": True,
+                }
+            }
+
+        # Original account creation flow
+        account_name = "Unknown Account"
         if "Account Name:" in description:
             lines = description.split("\n")
             for line in lines:
@@ -264,23 +326,20 @@ class TicketResolver:
                     account_name = line.split("Account Name:")[-1].strip()
                     break
 
-        # Auto-approve account creation
         actions_taken.append(f"Reviewed account creation request for: {account_name}")
         actions_taken.append("Auto-approved account creation request")
         actions_taken.append("Account creation request validated and approved")
 
-        results = {
-            "approved": True,
-            "action": "account_creation",
-            "account_name": account_name,
-            "message": "Account creation request has been automatically approved",
-            "auto_approved": True
-        }
-
         return {
             "status": "success",
             "actions_taken": actions_taken,
-            "result": results
+            "result": {
+                "approved": True,
+                "action": "account_creation",
+                "account_name": account_name,
+                "message": "Account creation request has been automatically approved",
+                "auto_approved": True,
+            }
         }
 
     async def handle_user_deactivation(self, params: Dict, context: Dict) -> Dict:

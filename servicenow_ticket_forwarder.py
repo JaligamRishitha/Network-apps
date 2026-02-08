@@ -14,7 +14,7 @@ from datetime import datetime
 # CONFIGURATION
 # ============================================================================
 
-SERVICENOW_URL = "http://149.102.158.71:4780"
+SERVICENOW_URL = "http://207.180.217.117:4780"
 ORCHESTRATOR_URL = "http://localhost:2486"
 
 # ServiceNow authentication (or use mock mode)

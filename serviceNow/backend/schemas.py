@@ -352,7 +352,7 @@ class AutoCreateTicketResponse(BaseModel):
     subcategory: Optional[str] = None
     priority: str
     status: str
-    assignment_group: str
+    assignment_group: Optional[str] = None
     assigned_to_id: Optional[int] = None
     assigned_to_name: Optional[str] = None
     sla_response_due: Optional[datetime] = None

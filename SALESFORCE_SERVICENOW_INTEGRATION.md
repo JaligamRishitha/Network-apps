@@ -19,7 +19,7 @@ Salesforce Backend creates:
      - Status: "Pending Agent Review"
         ↓
   2. ServiceNow Ticket (AUTOMATIC)
-     - POST http://149.102.158.71:4780/api/servicenow/incidents
+     - POST http://207.180.217.117:4780/api/servicenow/incidents
      - Title: "Service Appointment: {subject}"
      - Description: Full appointment details
      - Custom fields:
@@ -75,13 +75,13 @@ ticket_result = await servicenow_client.create_ticket(
 class ServiceNowClient:
     def __init__(self):
         # UPDATED: Now uses external URL
-        self.base_url = "http://149.102.158.71:4780"
+        self.base_url = "http://207.180.217.117:4780"
         self.api_token = os.getenv("SERVICENOW_API_TOKEN", "")
         self.timeout = 30
 ```
 
 **Before:** `http://servicenow-backend:4780` (Docker internal - didn't work across networks)
-**After:** `http://149.102.158.71:4780` (External IP - works everywhere) ✅
+**After:** `http://207.180.217.117:4780` (External IP - works everywhere) ✅
 
 ---
 
@@ -90,7 +90,7 @@ class ServiceNowClient:
 ### Salesforce Endpoint:
 ```
 POST /api/service/appointments
-Host: http://149.102.158.71:4799
+Host: http://207.180.217.117:4799
 ```
 
 **Request Body:**
@@ -111,7 +111,7 @@ Host: http://149.102.158.71:4799
 ### ServiceNow Endpoint (Called Automatically):
 ```
 POST /api/servicenow/incidents
-Host: http://149.102.158.71:4780
+Host: http://207.180.217.117:4780
 ```
 
 **Automatic Request:**
@@ -180,7 +180,7 @@ When appointment is created, Salesforce returns:
 - Cross-network communication was failing
 
 ### Solution:
-1. ✅ Updated ServiceNow client to use external URL: `http://149.102.158.71:4780`
+1. ✅ Updated ServiceNow client to use external URL: `http://207.180.217.117:4780`
 2. ✅ Restarted Salesforce backend to pick up new config
 3. ✅ Verified both backends are healthy
 
@@ -191,7 +191,7 @@ When appointment is created, Salesforce returns:
 ### 1. Create Appointment in Salesforce:
 
 ```bash
-curl -X POST http://149.102.158.71:4799/api/service/appointments \
+curl -X POST http://207.180.217.117:4799/api/service/appointments \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
@@ -211,7 +211,7 @@ curl -X POST http://149.102.158.71:4799/api/service/appointments \
 
 ```bash
 # Check ServiceNow tickets
-curl http://149.102.158.71:4780/tickets/
+curl http://207.180.217.117:4780/tickets/
 
 # Should see new ticket with:
 # - title: "Service Appointment: Test Appointment - Power Outage"
@@ -227,7 +227,7 @@ curl http://149.102.158.71:4780/tickets/
 - **Container:** salesforce-backend
 - **Port:** 4799
 - **Status:** ✅ Running and Healthy
-- **ServiceNow Client:** ✅ Configured (149.102.158.71:4780)
+- **ServiceNow Client:** ✅ Configured (207.180.217.117:4780)
 
 ### ServiceNow Backend:
 - **Container:** servicenow-backend

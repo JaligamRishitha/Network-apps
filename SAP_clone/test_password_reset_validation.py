@@ -10,7 +10,7 @@ import json
 
 
 # Backend API Configuration
-API_BASE_URL = "http://149.102.158.71:4798"
+API_BASE_URL = "http://207.180.217.117:4798"
 
 
 async def test_backend_api():

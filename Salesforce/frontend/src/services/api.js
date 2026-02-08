@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:18000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -173,6 +173,14 @@ export const serviceAPI = {
   // SAP Integration helpers
   checkPartsAvailability: (appointmentId) => api.get(`/api/service/appointments/${appointmentId}/check-parts`),
   retrySAPSync: (recordId, scenarioType) => api.post(`/api/mulesoft/retry/${scenarioType}/${recordId}`),
+};
+
+// Client Users
+export const clientUsersAPI = {
+  create: (data) => api.post('/api/client-users', data),
+  list: (params) => api.get('/api/client-users', { params }),
+  get: (id) => api.get(`/api/client-users/${id}`),
+  validate: (email) => api.post('/api/client-users/validate', { email }),
 };
 
 export default api;

@@ -5,7 +5,7 @@
 1. ✅ **Salesforce Backend is NOW RUNNING**
    - Container: `salesforce-backend` (healthy)
    - Port: 4799
-   - Health: http://149.102.158.71:4799/api/health ✅
+   - Health: http://207.180.217.117:4799/api/health ✅
 
 2. ✅ **Database Connection FIXED**
    - Connected to `salesforce-db`
@@ -35,13 +35,13 @@ Since the automatic integration has issues, **use the manual two-step process**:
 
 ### Step 1: Create Appointment
 ```bash
-POST http://149.102.158.71:4799/api/service/appointments
+POST http://207.180.217.117:4799/api/service/appointments
 ```
 *(Once endpoint is working)*
 
 ### Step 2: Create ServiceNow Ticket
 ```bash
-POST http://149.102.158.71:4780/api/servicenow/incidents
+POST http://207.180.217.117:4780/api/servicenow/incidents
 ```
 
 ### Complete Working Script:
@@ -54,8 +54,8 @@ import requests
 import json
 from datetime import datetime, timedelta
 
-SALESFORCE_API = "http://149.102.158.71:4799"
-SERVICENOW_API = "http://149.102.158.71:4780"
+SALESFORCE_API = "http://207.180.217.117:4799"
+SERVICENOW_API = "http://207.180.217.117:4780"
 
 def create_appointment_with_ticket():
     print("=" * 70)
@@ -141,13 +141,13 @@ python3 create_appointment_manual.py
 
 ```bash
 # Get ServiceNow token
-SNOW_TOKEN=$(curl -s -X POST http://149.102.158.71:4780/token \
+SNOW_TOKEN=$(curl -s -X POST http://207.180.217.117:4780/token \
   -d "username=admin@company.com&password=admin123" | \
   python3 -c "import json, sys; print(json.load(sys.stdin)['access_token'])")
 
 # List tickets
 curl -s -H "Authorization: Bearer $SNOW_TOKEN" \
-  http://149.102.158.71:4780/tickets/ | python3 -m json.tool
+  http://207.180.217.117:4780/tickets/ | python3 -m json.tool
 ```
 
 ---
@@ -162,7 +162,7 @@ If you want to fix the `/api/service/appointments` endpoint:
    docker-compose build salesforce-backend
    docker-compose up -d salesforce-backend
    sleep 15
-   curl http://149.102.158.71:4799/api/health
+   curl http://207.180.217.117:4799/api/health
    ```
 
 2. **Test the Endpoint:**
@@ -199,11 +199,11 @@ This gives you:
 
 | Component | Status | URL |
 |-----------|--------|-----|
-| Salesforce Backend | ✅ Running | http://149.102.158.71:4799 |
+| Salesforce Backend | ✅ Running | http://207.180.217.117:4799 |
 | Salesforce Health | ✅ Working | /api/health |
 | Salesforce Auth | ✅ Working | /api/auth/login |
 | Salesforce Appointments | ❌ 404 Error | /api/service/appointments |
-| ServiceNow Backend | ✅ Running | http://149.102.158.71:4780 |
+| ServiceNow Backend | ✅ Running | http://207.180.217.117:4780 |
 | ServiceNow Tickets | ✅ Working | /api/servicenow/incidents |
 
 ---

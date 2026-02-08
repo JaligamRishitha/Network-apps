@@ -11,10 +11,10 @@
 ### Option A: Manual Deployment
 ```bash
 # 1. Copy files to server
-scp -r Inte-platform/mcp-server/ user@149.102.158.71:/opt/mulesoft/
+scp -r Inte-platform/mcp-server/ user@207.180.217.117:/opt/mulesoft/
 
 # 2. SSH to server
-ssh user@149.102.158.71
+ssh user@207.180.217.117
 
 # 3. Setup and run
 cd /opt/mulesoft/mcp-server
@@ -38,7 +38,7 @@ After MCP is deployed to server:
 ```javascript
 // src/api.js
 const api = axios.create({
-  baseURL: 'http://149.102.158.71:8090/api',  // MCP on server
+  baseURL: 'http://207.180.217.117:8090/api',  // MCP on server
   headers: { 'Content-Type': 'application/json' },
 });
 ```
@@ -47,7 +47,7 @@ const api = axios.create({
 
 ```bash
 # Create working Salesforce connector
-curl -X POST http://149.102.158.71:4797/api/connectors/ \
+curl -X POST http://207.180.217.117:4797/api/connectors/ \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -61,6 +61,6 @@ curl -X POST http://149.102.158.71:4797/api/connectors/ \
 
 ## Final Architecture:
 ```
-Frontend → MCP Server (149.102.158.71:8090) → Salesforce (149.102.158.71:4799)
-        ↘ Remote Backend (149.102.158.71:4797) → SAP/ServiceNow
+Frontend → MCP Server (207.180.217.117:8090) → Salesforce (207.180.217.117:4799)
+        ↘ Remote Backend (207.180.217.117:4797) → SAP/ServiceNow
 ```

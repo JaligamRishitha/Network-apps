@@ -41,7 +41,7 @@ docker-compose up -d salesforce-db salesforce-backend
 
 # Wait and check
 sleep 15
-curl http://149.102.158.71:4799/api/health
+curl http://207.180.217.117:4799/api/health
 ```
 
 **Option B: Use Existing Working Setup**
@@ -96,7 +96,7 @@ Until the automatic integration is fixed, use this two-step approach:
 ```javascript
 async function createAppointmentWithTicket(formData) {
   // Step 1: Authenticate with Salesforce
-  const sfAuthResponse = await fetch('http://149.102.158.71:4799/api/auth/login', {
+  const sfAuthResponse = await fetch('http://207.180.217.117:4799/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: 'admin', password: 'admin123' })
@@ -104,7 +104,7 @@ async function createAppointmentWithTicket(formData) {
   const { access_token: sfToken } = await sfAuthResponse.json();
 
   // Step 2: Create Salesforce Appointment
-  const appointmentResponse = await fetch('http://149.102.158.71:4799/api/service/appointments', {
+  const appointmentResponse = await fetch('http://207.180.217.117:4799/api/service/appointments', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -128,7 +128,7 @@ async function createAppointmentWithTicket(formData) {
   const appointmentNumber = appointment.appointment.appointment_number;
 
   // Step 3: Authenticate with ServiceNow
-  const snowAuthResponse = await fetch('http://149.102.158.71:4780/token', {
+  const snowAuthResponse = await fetch('http://207.180.217.117:4780/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: 'username=admin@company.com&password=admin123'
@@ -145,7 +145,7 @@ async function createAppointmentWithTicket(formData) {
   });
 
   const ticketResponse = await fetch(
-    `http://149.102.158.71:4780/api/servicenow/incidents?${ticketParams}`,
+    `http://207.180.217.117:4780/api/servicenow/incidents?${ticketParams}`,
     {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${snowToken}` }
@@ -237,6 +237,6 @@ docker-compose up -d salesforce-backend
 
 Once backend is up, test with:
 ```bash
-curl http://149.102.158.71:4799/api/health
+curl http://207.180.217.117:4799/api/health
 python3 create_sample_appointment.py
 ```

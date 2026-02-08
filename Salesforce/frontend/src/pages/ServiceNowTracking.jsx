@@ -11,7 +11,7 @@ import {
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:18000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 const SERVICENOW_BASE_URL = 'https://your-instance.service-now.com';
 
 // Helper function to copy text to clipboard
@@ -362,7 +362,7 @@ export default function ServiceNowTracking() {
                 <CopyableField label="Appointment ID" value={result.appointment_id?.toString()} />
                 {(result.assigned_technician_id || result.technician_name) && (
                   <div className="mb-4">
-                    <label className="text-sm font-medium text-gray-600">Assigned Technician</label>
+                    {/* <label className="text-sm font-medium text-gray-600">Assigned Technician</label> */}
                     <p className="mt-1 text-sm text-gray-700 p-2 bg-blue-50 rounded">
                       {result.technician_name || `ID: ${result.assigned_technician_id}`}
                     </p>

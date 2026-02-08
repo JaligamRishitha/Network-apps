@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 
 ORCHESTRATOR_URL = "http://localhost:2486"
-SERVICENOW_URL = "http://149.102.158.71:4780"
+SERVICENOW_URL = "http://207.180.217.117:4780"
 
 async def fetch_servicenow_tickets():
     """Fetch open incidents from ServiceNow"""

@@ -54,7 +54,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8080
 3. **Add Outbound Message Action:**
    - Workflow Actions → Add Workflow Action → New Outbound Message
    - Name: "Send to ServiceNow Integration"
-   - Endpoint URL: `http://149.102.158.71:8080/api/webhooks/salesforce/appointment`
+   - Endpoint URL: `http://207.180.217.117:8080/api/webhooks/salesforce/appointment`
    - Fields to Send:
      - `Id`
      - `Customer_Name__c`
@@ -69,7 +69,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8080
 
 5. **Repeat for Work Orders:**
    - Object: `WorkOrder`
-   - Endpoint: `http://149.102.158.71:8080/api/webhooks/salesforce/workorder`
+   - Endpoint: `http://207.180.217.117:8080/api/webhooks/salesforce/workorder`
    - Fields: Id, Title, Description, Priority, Work_Order_Type__c, etc.
 
 ### Option B: Using Salesforce REST API Callout (Apex Trigger)
@@ -90,7 +90,7 @@ public class AppointmentWebhookService {
     public static void sendToServiceNow(Appointment__c apt) {
         Http http = new Http();
         HttpRequest request = new HttpRequest();
-        request.setEndpoint('http://149.102.158.71:8080/api/webhooks/salesforce/appointment');
+        request.setEndpoint('http://207.180.217.117:8080/api/webhooks/salesforce/appointment');
         request.setMethod('POST');
         request.setHeader('Content-Type', 'application/json');
 
@@ -122,7 +122,7 @@ public class AppointmentWebhookService {
 **Add Remote Site Setting:**
 1. Setup → Remote Site Settings → New Remote Site
 2. Name: `ServiceNow_Integration`
-3. URL: `http://149.102.158.71:8080`
+3. URL: `http://207.180.217.117:8080`
 4. Active: ✓
 
 ---

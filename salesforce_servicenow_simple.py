@@ -30,7 +30,7 @@ app.add_middleware(
 # ============================================================================
 
 SERVICENOW_CONFIG = {
-    "base_url": "http://149.102.158.71:4780",
+    "base_url": "http://207.180.217.117:4780",
     "username": "admin",
     "password": "password"
 }

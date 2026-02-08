@@ -27,6 +27,7 @@ const UserManagement: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [createForm, setCreateForm] = useState({
     username: '',
+    email: '',
     password: '',
     roles: [] as string[],
   });
@@ -67,13 +68,14 @@ const UserManagement: React.FC = () => {
     try {
       await usersApi.create({
         username: createForm.username,
+        email: createForm.email,
         password: createForm.password,
         roles: createForm.roles,
       });
       
       alert(`User '${createForm.username}' created successfully!`);
       setShowCreateModal(false);
-      setCreateForm({ username: '', password: '', roles: [] });
+      setCreateForm({ username: '', email: '', password: '', roles: [] });
       loadUsers();
     } catch (error: any) {
       console.error('Failed to create user:', error);
@@ -329,6 +331,20 @@ const UserManagement: React.FC = () => {
 
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '4px', fontWeight: 500, fontSize: '14px' }}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={createForm.email}
+                  onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                  required
+                  placeholder="Enter email"
+                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #d9d9d9', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontWeight: 500, fontSize: '14px' }}>
                   Password
                 </label>
                 <input
@@ -365,7 +381,7 @@ const UserManagement: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setShowCreateModal(false);
-                    setCreateForm({ username: '', password: '', roles: [] });
+                    setCreateForm({ username: '', email: '', password: '', roles: [] });
                   }}
                   style={{
                     padding: '10px 20px',

@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables"""
     
     # Database
-    database_url: str = "postgresql+asyncpg://sapuser:sappassword@149.102.158.71:5432/saperp"
+    database_url: str = "postgresql+asyncpg://sapuser:sappassword@207.180.217.117:5432/saperp"
     
     # JWT Authentication
     jwt_secret: str = "your-secret-key-change-in-production"

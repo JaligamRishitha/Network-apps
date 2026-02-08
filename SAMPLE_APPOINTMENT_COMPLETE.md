@@ -76,7 +76,7 @@ This creates only the Salesforce appointment (ServiceNow integration needs to be
 #### Step 1: Login to Salesforce
 
 ```bash
-curl -X POST http://149.102.158.71:4799/api/auth/login \
+curl -X POST http://207.180.217.117:4799/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}'
 ```
@@ -88,7 +88,7 @@ Save the `access_token` from the response.
 ```bash
 TOKEN="your_access_token_here"
 
-curl -X POST http://149.102.158.71:4799/api/service/appointments \
+curl -X POST http://207.180.217.117:4799/api/service/appointments \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{
@@ -109,14 +109,14 @@ curl -X POST http://149.102.158.71:4799/api/service/appointments \
 
 ```bash
 # Login to ServiceNow
-curl -X POST http://149.102.158.71:4780/token \
+curl -X POST http://207.180.217.117:4780/token \
   -d "username=admin@company.com&password=admin123"
 
 # Save the access_token
 SNOW_TOKEN="your_servicenow_token"
 
 # Create ticket
-curl -X POST "http://149.102.158.71:4780/api/servicenow/incidents?short_description=Service%20Appointment%3A%20Emergency%20Repair&description=Appointment%20details%20here&category=request&priority=1" \
+curl -X POST "http://207.180.217.117:4780/api/servicenow/incidents?short_description=Service%20Appointment%3A%20Emergency%20Repair&description=Appointment%20details%20here&category=request&priority=1" \
   -H "Authorization: Bearer $SNOW_TOKEN"
 ```
 
@@ -228,12 +228,12 @@ curl -X POST "http://149.102.158.71:4780/api/servicenow/incidents?short_descript
 ## System Status
 
 ### Salesforce Backend
-- **URL**: http://149.102.158.71:4799
+- **URL**: http://207.180.217.117:4799
 - **Status**: ✅ Running
 - **Credentials**: admin / admin123
 
 ### ServiceNow Backend
-- **URL**: http://149.102.158.71:4780
+- **URL**: http://207.180.217.117:4780
 - **Status**: ✅ Running
 - **Credentials**: admin@company.com / admin123
 

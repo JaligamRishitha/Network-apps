@@ -50,7 +50,7 @@ async def validate_appointment(
     """
     service = AppointmentValidationService(db)
 
-    validation_result = service.validate_appointment_request(
+    validation_result = await service.validate_appointment_request(
         required_parts=request.required_parts,
         required_skills=request.required_skills,
         location=request.location,
@@ -73,7 +73,7 @@ async def search_parts(
     """
     service = AppointmentValidationService(db)
 
-    parts_result = service.validate_parts_availability(query)
+    parts_result = await service.validate_parts_availability(query)
 
     return {
         "query": query,
@@ -95,7 +95,7 @@ async def get_available_technicians(
     """
     service = AppointmentValidationService(db)
 
-    technicians = service.get_available_technicians(skill=skill)
+    technicians = await service.get_available_technicians(skill=skill)
 
     return {
         "count": len(technicians),
@@ -115,7 +115,7 @@ async def validate_technician_skills(
     """
     service = AppointmentValidationService(db)
 
-    result = service.validate_technician_availability(required_skills)
+    result = await service.validate_technician_availability(required_skills)
 
     return result
 
@@ -132,7 +132,7 @@ async def search_locations(
     """
     service = AppointmentValidationService(db)
 
-    result = service.validate_location(location)
+    result = await service.validate_location(location)
 
     return result
 
@@ -150,7 +150,7 @@ async def check_budget(
     """
     service = AppointmentValidationService(db)
 
-    result = service.validate_budget(cost_center_id, estimated_cost)
+    result = await service.validate_budget(cost_center_id, estimated_cost)
 
     return result
 
@@ -167,7 +167,7 @@ async def get_material_recommendations(
     """
     service = AppointmentValidationService(db)
 
-    recommendations = service.get_material_recommendations(asset_id=asset_id)
+    recommendations = await service.get_material_recommendations(asset_id=asset_id)
 
     return {
         "count": len(recommendations),

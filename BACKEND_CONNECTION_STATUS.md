@@ -3,7 +3,7 @@
 ## Connection Type: **SERVER BACKEND** (Docker Container)
 
 ### Frontend Configuration
-- **API URL**: `http://149.102.158.71:4799`
+- **API URL**: `http://207.180.217.117:4799`
 - **Environment File**: `/frontend/.env`
 - **Fallback URL**: `http://localhost:18000` (if env var not set)
 
@@ -27,7 +27,7 @@
 ```
 Frontend (Browser)
     ↓
-http://149.102.158.71:4799
+http://207.180.217.117:4799
     ↓
 Docker Container: salesforce-backend (Port 4799)
     ↓
@@ -38,15 +38,15 @@ PostgreSQL Database (Port 4791)
 
 ### Key Points
 1. **Not Local**: The frontend is NOT connecting to `localhost` or `127.0.0.1`
-2. **Server IP**: Connected to server IP `149.102.158.71` on port `4799`
+2. **Server IP**: Connected to server IP `207.180.217.117` on port `4799`
 3. **Docker Deployment**: Backend runs in Docker container, not as local process
 4. **Production-Ready**: Using server IP indicates production/staging environment
 5. **Persistent**: Database has been running for 46 hours continuously
 
 ### API Endpoints Available
-- Base URL: `http://149.102.158.71:4799/api`
-- Health Check: `http://149.102.158.71:4799/api/health`
-- Docs: `http://149.102.158.71:4799/docs`
+- Base URL: `http://207.180.217.117:4799/api`
+- Health Check: `http://207.180.217.117:4799/api/health`
+- Docs: `http://207.180.217.117:4799/docs`
 
 ### Conclusion
-✅ **Connected to SERVER BACKEND** - The Salesforce application is connected to a Docker-containerized backend running on a server machine (IP: 149.102.158.71), not a local development backend.
+✅ **Connected to SERVER BACKEND** - The Salesforce application is connected to a Docker-containerized backend running on a server machine (IP: 207.180.217.117), not a local development backend.

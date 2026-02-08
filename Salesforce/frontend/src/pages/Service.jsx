@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 const subNavItems = [
   { key: 'cases', label: 'Cases' },
   { key: 'appointments', label: 'Appointments' },
-  { key: 'workorders', label: 'Work Orders' },
+  // { key: 'workorders', label: 'Work Orders' },
   { key: 'contacts', label: 'Contacts' },
   { key: 'accounts', label: 'Accounts' },
   { key: 'quicktext', label: 'Quick Text' },
@@ -685,7 +685,7 @@ export default function Service() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Scheduled</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Technician</th>
+                {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Technician</th> */}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -703,7 +703,6 @@ export default function Service() {
                   <td className="px-4 py-3">
                     <StatusBadge status={apt.status?.toUpperCase()} />
                   </td>
-                  <td className="px-4 py-3 text-sm">{apt.technician_name || '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -721,7 +720,7 @@ export default function Service() {
           <div className="p-2 bg-orange-500 rounded-md">
             <WrenchScrewdriverIcon className="w-5 h-5 text-white" />
           </div>
-          <h2 className="text-lg font-semibold">Work Orders</h2>
+          {/* <h2 className="text-lg font-semibold">Work Orders</h2> */}
         </div>
         <button
           onClick={() => setShowWorkOrderModal(true)}

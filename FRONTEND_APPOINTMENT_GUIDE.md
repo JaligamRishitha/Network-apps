@@ -5,7 +5,7 @@
 ### **Salesforce Appointment Creation Endpoint**
 
 ```
-POST http://149.102.158.71:4799/api/service/appointments
+POST http://207.180.217.117:4799/api/service/appointments
 ```
 
 **OR if accessing locally:**
@@ -21,7 +21,7 @@ POST http://localhost:4777/api/service/appointments
 
 **Endpoint:**
 ```
-POST http://149.102.158.71:4799/api/auth/login
+POST http://207.180.217.117:4799/api/auth/login
 ```
 
 **Request Body:**
@@ -44,7 +44,7 @@ POST http://149.102.158.71:4799/api/auth/login
 
 **Endpoint:**
 ```
-POST http://149.102.158.71:4799/api/service/appointments
+POST http://207.180.217.117:4799/api/service/appointments
 ```
 
 **Headers:**
@@ -106,19 +106,19 @@ The automatic integration from Salesforce → ServiceNow is **currently not work
 
 #### 1. **List All Incidents (Standard ServiceNow)**
 ```
-GET http://149.102.158.71:4780/incidents/
+GET http://207.180.217.117:4780/incidents/
 Authorization: Bearer {servicenow_token}
 ```
 
 #### 2. **List All Tickets (ServiceNow ITSM)**
 ```
-GET http://149.102.158.71:4780/tickets/
+GET http://207.180.217.117:4780/tickets/
 Authorization: Bearer {servicenow_token}
 ```
 
 #### 3. **Get ServiceNow Token**
 ```
-POST http://149.102.158.71:4780/token
+POST http://207.180.217.117:4780/token
 Content-Type: application/x-www-form-urlencoded
 
 username=admin@company.com&password=admin123
@@ -128,17 +128,17 @@ username=admin@company.com&password=admin123
 
 ```bash
 # 1. Get ServiceNow token
-TOKEN=$(curl -s -X POST http://149.102.158.71:4780/token \
+TOKEN=$(curl -s -X POST http://207.180.217.117:4780/token \
   -d "username=admin@company.com&password=admin123" | \
   python3 -c "import json, sys; print(json.load(sys.stdin)['access_token'])")
 
 # 2. View all incidents
 curl -H "Authorization: Bearer $TOKEN" \
-  http://149.102.158.71:4780/incidents/
+  http://207.180.217.117:4780/incidents/
 
 # 3. View all tickets
 curl -H "Authorization: Bearer $TOKEN" \
-  http://149.102.158.71:4780/tickets/
+  http://207.180.217.117:4780/tickets/
 ```
 
 ---
@@ -150,8 +150,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 ```jsx
 import React, { useState } from 'react';
 
-const SALESFORCE_API = 'http://149.102.158.71:4799';
-const SERVICENOW_API = 'http://149.102.158.71:4780';
+const SALESFORCE_API = 'http://207.180.217.117:4799';
+const SERVICENOW_API = 'http://207.180.217.117:4780';
 
 function AppointmentCreator() {
   const [formData, setFormData] = useState({
@@ -429,7 +429,7 @@ export default AppointmentCreator;
 ```javascript
 async function getAppointments(token) {
   const response = await fetch(
-    'http://149.102.158.71:4799/api/service/appointments',
+    'http://207.180.217.117:4799/api/service/appointments',
     {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -445,7 +445,7 @@ async function getAppointments(token) {
 ```javascript
 async function getSchedulingRequests(token) {
   const response = await fetch(
-    'http://149.102.158.71:4799/api/service/scheduling-requests',
+    'http://207.180.217.117:4799/api/service/scheduling-requests',
     {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -462,7 +462,7 @@ async function getSchedulingRequests(token) {
 // Get only pending appointments
 async function getPendingAppointments(token) {
   const response = await fetch(
-    'http://149.102.158.71:4799/api/service/scheduling-requests?status=PENDING_AGENT_REVIEW',
+    'http://207.180.217.117:4799/api/service/scheduling-requests?status=PENDING_AGENT_REVIEW',
     {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -484,7 +484,7 @@ async function getPendingAppointments(token) {
 
 # 1. Login to Salesforce
 echo "🔐 Logging in to Salesforce..."
-TOKEN=$(curl -s -X POST http://149.102.158.71:4799/api/auth/login \
+TOKEN=$(curl -s -X POST http://207.180.217.117:4799/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}' | \
   python3 -c "import json, sys; print(json.load(sys.stdin)['access_token'])")
@@ -494,7 +494,7 @@ echo "✅ Token: ${TOKEN:0:20}..."
 # 2. Create Appointment
 echo ""
 echo "📋 Creating appointment..."
-APPOINTMENT=$(curl -s -X POST http://149.102.158.71:4799/api/service/appointments \
+APPOINTMENT=$(curl -s -X POST http://207.180.217.117:4799/api/service/appointments \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{
@@ -521,7 +521,7 @@ echo "✅ Appointment Number: $APPT_NUMBER"
 # 4. List all appointments
 echo ""
 echo "📋 Listing all scheduling requests..."
-curl -s -X GET http://149.102.158.71:4799/api/service/scheduling-requests \
+curl -s -X GET http://207.180.217.117:4799/api/service/scheduling-requests \
   -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
 ```
 
@@ -592,7 +592,7 @@ Available accounts in Salesforce:
 
 ## 🚀 Next Steps
 
-1. **Use the frontend endpoint**: `POST http://149.102.158.71:4799/api/service/appointments`
+1. **Use the frontend endpoint**: `POST http://207.180.217.117:4799/api/service/appointments`
 2. **Copy the React component** above into your frontend
 3. **Test with curl** using the provided scripts
 4. **View appointments**: Use `GET /api/service/scheduling-requests`

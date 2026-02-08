@@ -13,7 +13,9 @@ from . import (
     platform_events,
     sap_integration,
     mulesoft,
-    mulesoft_integration
+    mulesoft_integration,
+    client_users,
+    client_auth,
 )
 
 __all__ = [
@@ -30,5 +32,7 @@ __all__ = [
     'platform_events',
     'sap_integration',
     'mulesoft',
-    'mulesoft_integration'
+    'mulesoft_integration',
+    'client_users',
+    'client_auth',
 ]

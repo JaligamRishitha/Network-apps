@@ -93,24 +93,33 @@ class TokenData(BaseModel):
 # Account Schemas
 class AccountBase(BaseModel):
     name: str
+    email: Optional[EmailStr] = None
     phone: Optional[str] = None
     website: Optional[str] = None
     industry: Optional[str] = None
     description: Optional[str] = None
     billing_address: Optional[str] = None
+    street: Optional[str] = None
+    zip_code: Optional[str] = None
+    country: Optional[str] = None
 
 
 class AccountCreate(AccountBase):
+    email: EmailStr
     owner_id: Optional[int] = None
 
 
 class AccountUpdate(BaseModel):
     name: Optional[str] = None
+    email: Optional[EmailStr] = None
     phone: Optional[str] = None
     website: Optional[str] = None
     industry: Optional[str] = None
     description: Optional[str] = None
     billing_address: Optional[str] = None
+    street: Optional[str] = None
+    zip_code: Optional[str] = None
+    country: Optional[str] = None
     owner_id: Optional[int] = None
 
 

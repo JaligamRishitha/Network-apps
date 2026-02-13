@@ -68,7 +68,7 @@ class ServiceNowClient:
         """Initialize mock data for demo purposes"""
         # Sample users
         users = [
-            {"sys_id": self._generate_sys_id(), "user_name": "admin", "email": "admin@company.com", "first_name": "System", "last_name": "Administrator", "active": "true", "title": "IT Administrator"},
+            {"sys_id": self._generate_sys_id(), "user_name": "admin", "email": "admin@company.com", "first_name": "Sally", "last_name": "Matthew", "active": "true", "title": "IT Administrator"},
             {"sys_id": self._generate_sys_id(), "user_name": "jsmith", "email": "jsmith@company.com", "first_name": "John", "last_name": "Smith", "active": "true", "title": "Software Engineer"},
             {"sys_id": self._generate_sys_id(), "user_name": "mjones", "email": "mjones@company.com", "first_name": "Mary", "last_name": "Jones", "active": "true", "title": "Project Manager"},
         ]

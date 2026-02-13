@@ -217,16 +217,16 @@ export default function App() {
               padding: '4px 12px',
               borderRadius: 8
             }} className="nav-icon-btn">
-              <Avatar 
-                size={32} 
-                style={{ 
+              <Avatar
+                size={32}
+                style={{
                   background: 'linear-gradient(135deg, #00a1e0 0%, #5c6bc0 100%)',
                   fontSize: 14
                 }}
               >
-                U
+                C
               </Avatar>
-              <span style={{ fontWeight: 500, color: '#333' }}>User</span>
+              <span style={{ fontWeight: 500, color: '#333' }}>Chris Johnson</span>
               <DownOutlined style={{ fontSize: 10, color: '#666' }} />
             </div>
           </Dropdown>

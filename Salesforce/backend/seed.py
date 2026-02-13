@@ -35,8 +35,8 @@ def seed_database():
             username="admin",
             email="admin@example.com",
             password_hash=get_password_hash("admin123"),
-            first_name="Admin",
-            last_name="User",
+            first_name="James",
+            last_name="Thomas",
             role="admin"
         )
         db.add(admin)

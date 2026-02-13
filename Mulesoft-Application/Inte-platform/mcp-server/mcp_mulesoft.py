@@ -2067,7 +2067,7 @@ SAP_API_URL = "http://207.180.217.117:4798"  # Remote SAP backend
 SERVICENOW_API_URL = "http://207.180.217.117:4780"  # Remote ServiceNow backend
 SALESFORCE_API_URL = "http://207.180.217.117:4799"  # Remote Salesforce backend
 SALESFORCE_MCP_URL = "http://207.180.217.117:8095"  # Salesforce MCP Server (SSE)
-MCP_HTTP_PORT = 8090  # Port for HTTP API
+MCP_HTTP_PORT = 8095  # Port for HTTP API
 
 
 # ============================================================================

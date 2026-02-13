@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Spin, Alert, Typography, Space, Button, Tooltip, Modal, message, Tabs, Dropdown } from 'antd';
+import { Card, Table, Tag, Spin, Alert, Typography, Space, Button, Tooltip, Modal, message, Tabs } from 'antd';
 import {
   WarningOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, CloseCircleOutlined,
   ReloadOutlined, CodeOutlined, SendOutlined, CloudUploadOutlined, ApiOutlined, ThunderboltOutlined,
-  UserAddOutlined, SyncOutlined, FileProtectOutlined, DownOutlined, RocketOutlined, KeyOutlined, SafetyOutlined
+  UserAddOutlined, SyncOutlined, FileProtectOutlined, RocketOutlined, KeyOutlined, SafetyOutlined,
+  RobotOutlined, LinkOutlined
 } from '@ant-design/icons';
 import { backendApi as api } from '../api';
 import { JsonDisplay, CaseStatus, IntegrationStatusTag, CaseExpandedRow } from '../components/IntegrationComponents';
@@ -22,11 +23,11 @@ export default function Runtime() {
   const [snowModal, setSnowModal] = useState({ visible: false, caseData: null, loading: false });
   const [snowResult, setSnowResult] = useState(null);
   const [snowPreview, setSnowPreview] = useState({ ticket: null, approval: null });
-  const [orchestrating, setOrchestrating] = useState(false);
   const [requestStates, setRequestStates] = useState({});
   const [passwordResetModal, setPasswordResetModal] = useState({ visible: false, ticketData: null, loading: false });
   const [passwordResetResult, setPasswordResetResult] = useState(null);
   const [passwordResetPreview, setPasswordResetPreview] = useState(null);
+  const [validationModal, setValidationModal] = useState({ visible: false, result: null });
 
   const fetchSalesforceConnector = async () => {
     try {
@@ -173,6 +174,7 @@ export default function Runtime() {
       if (!connector) throw new Error('No Salesforce connector configured.');
       const response = await api.post(`/cases/validate-single-request?connector_id=${connector.id}`, { request_id: requestId, account_name: request.name }, { timeout: 30000 });
       setRequestStates(prev => ({ ...prev, [requestId]: { ...prev[requestId], validating: false, validated: true, validationResult: response.data } }));
+      setValidationModal({ visible: true, result: response.data });
       if (response.data.valid) message.success(`Request #${requestId} validated successfully`); else message.warning(`Request #${requestId} validation failed`);
       await fetchAllPlatformEvents();
     } catch (err) {
@@ -181,57 +183,23 @@ export default function Runtime() {
     }
   };
 
-  const sendSingleToServiceNow = async (record) => {
+  const deployToSalesforce = async (record) => {
     const request = record.originalData;
     const requestId = request.id;
     const currentState = requestStates[requestId];
-    const integrationStatus = record.integrationStatus?.toUpperCase() || '';
-    const isValidatedOnServer = integrationStatus === 'PENDING_MULESOFT' || integrationStatus === 'PENDING_MULE';
     const isValidatedLocally = currentState?.validated && currentState?.validationResult?.valid;
-    if (!isValidatedLocally && !isValidatedOnServer) { message.warning('Please validate the request first'); return; }
+    if (!isValidatedLocally) { message.warning('Please validate the request first using the Validate button'); return; }
     setRequestStates(prev => ({ ...prev, [requestId]: { ...prev[requestId], sending: true, sendResult: null } }));
     try {
       let connector = sfConnector || await fetchSalesforceConnector();
       if (!connector) throw new Error('No Salesforce connector configured.');
-      const response = await api.post(`/cases/send-single-to-servicenow?connector_id=${connector.id}`, { request_id: requestId, account_name: request.name, request_data: request }, { timeout: 30000 });
+      const response = await api.post(`/cases/deploy-to-salesforce?connector_id=${connector.id}`, { request_id: requestId, account_name: request.name }, { timeout: 30000 });
       setRequestStates(prev => ({ ...prev, [requestId]: { ...prev[requestId], sending: false, sent: response.data.success, sendResult: response.data } }));
-      if (response.data.success) { message.success(`Request #${requestId} sent to ServiceNow successfully`); await fetchAllPlatformEvents(); } else message.error(`Failed to send request #${requestId} to ServiceNow`);
+      if (response.data.success) { message.success(`Request #${requestId} deployed to Salesforce`); await fetchAllPlatformEvents(); } else message.error(`Failed to deploy request #${requestId} to Salesforce`);
     } catch (err) {
       setRequestStates(prev => ({ ...prev, [requestId]: { ...prev[requestId], sending: false, sent: false, sendResult: { success: false, error: err.response?.data?.detail || err.message } } }));
-      message.error(`Failed to send request #${requestId} to ServiceNow`);
+      message.error(`Failed to deploy request #${requestId} to Salesforce`);
     }
-  };
-
-  const checkServiceNowStatus = async (record) => {
-    const requestId = record.id;
-    const ticketId = record.servicenowTicketId;
-    if (!ticketId) { message.warning('No ServiceNow ticket found'); return; }
-    setRequestStates(prev => ({ ...prev, [requestId]: { ...prev[requestId], checkingStatus: true } }));
-    try {
-      const response = await api.get(`/servicenow/ticket-status/${ticketId}`, { timeout: 15000 });
-      setRequestStates(prev => ({ ...prev, [requestId]: { ...prev[requestId], checkingStatus: false, ticketStatus: response.data } }));
-      if (response.data.status === 'approved') message.success(`Ticket ${ticketId} has been APPROVED!`);
-      else if (response.data.status === 'rejected') message.error(`Ticket ${ticketId} has been REJECTED`);
-      else message.info(`Ticket ${ticketId} status: ${response.data.status}`);
-      await fetchAllPlatformEvents();
-    } catch (err) {
-      setRequestStates(prev => ({ ...prev, [requestId]: { ...prev[requestId], checkingStatus: false, ticketStatus: { status: 'unknown', error: err.message } } }));
-      message.error('Failed to check ServiceNow ticket status');
-    }
-  };
-
-  const runOrchestration = async () => {
-    setOrchestrating(true);
-    try {
-      let connector = sfConnector || await fetchSalesforceConnector();
-      if (!connector) throw new Error('No Salesforce connector configured.');
-      const response = await api.post(`/cases/orchestrate/account-requests?connector_id=${connector.id}`, null, { timeout: 60000 });
-      if (response.data.total_sent_to_servicenow > 0) message.success(`${response.data.total_sent_to_servicenow} requests sent to ServiceNow`);
-      else if (response.data.total_fetched === 0) message.info('No pending account requests');
-      else message.warning(`Completed with ${response.data.total_failed} failures`);
-      await fetchAllPlatformEvents();
-    } catch (err) { message.error(err.response?.data?.detail || err.message); }
-    finally { setOrchestrating(false); }
   };
 
   const handleSendPasswordResetToSAP = async (record) => {
@@ -359,12 +327,9 @@ export default function Runtime() {
     { title: 'Actions', key: 'actions', width: 240, fixed: 'right', render: (_, record) => {
       const reqState = requestStates[record.id] || {};
       const isValidatedLocally = reqState.validated && reqState.validationResult?.valid;
-      const integrationStatus = record.integrationStatus?.toUpperCase() || '';
-      const isValidatedOnServer = integrationStatus === 'PENDING_MULESOFT' || integrationStatus === 'PENDING_MULE';
-      const isValidated = isValidatedLocally || isValidatedOnServer;
       const isPending = record.status === 'PENDING' || record.eventType === 'case';
-      // Check if already deployed (any post-deployment state)
-      const isDeployed = integrationStatus === 'COMPLETED' || integrationStatus === 'APPROVED' || integrationStatus === 'SYNCED' || integrationStatus === 'REQUESTED';
+      const integrationStatus = record.integrationStatus?.toUpperCase() || '';
+      const isDeployed = integrationStatus === 'COMPLETED' || integrationStatus === 'APPROVED' || integrationStatus === 'SYNCED';
 
       // Handle Password Reset events
       if (record.eventType === 'password_reset') {
@@ -389,27 +354,24 @@ export default function Runtime() {
         );
       }
 
-      const deployMenuItems = { items: [{ key: 'sap', icon: <SendOutlined />, label: 'SAP', onClick: () => handleSendToSAP(record) }, { key: 'servicenow', icon: <SendOutlined />, label: 'ServiceNow', onClick: () => record.eventType === 'case' ? handleSendToServiceNow(record) : sendSingleToServiceNow(record) }] };
-      // Disable deploy if: not validated, already deployed, or currently sending
-      const isDeployDisabled = record.eventType === 'account' && (!isValidated || isDeployed || reqState.sending);
-
-      // After deployment, show just "Deployed" text - no buttons
+      // After deployment, show just "Deployed" tag
       if (isDeployed) {
         return <Tag icon={<CheckCircleOutlined />} color="success" style={{ borderRadius: 6, padding: '4px 12px', fontSize: 13 }}>Deployed</Tag>;
       }
 
+      // Disable deploy if: not validated locally or currently sending
+      const isDeployDisabled = record.eventType === 'account' && (!isValidatedLocally || reqState.sending);
+
       return (
         <Space size="small">
-          {/* Show Validate button only for non-deployed items */}
-          <Tooltip title={record.eventType === 'case' ? 'Cases are pre-validated' : isPending ? 'Validate this request' : 'Only pending requests can be validated'}>
-            <Button icon={<FileProtectOutlined />} size="small" loading={reqState.validating} disabled={record.eventType === 'case' || !isPending || reqState.validating} onClick={(e) => { e.stopPropagation(); validateSingleRequest(record); }} style={{ borderRadius: 6, background: (record.eventType === 'case' || isValidated) ? '#f6ffed' : undefined, borderColor: (record.eventType === 'case' || isValidated) ? '#b7eb8f' : undefined, color: (record.eventType === 'case' || isValidated) ? '#52c41a' : undefined }}>{record.eventType === 'case' || isValidated ? 'Validated' : 'Validate'}</Button>
+          {/* Validate button - shows AI Agent popup */}
+          <Tooltip title={record.eventType === 'case' ? 'Cases are pre-validated' : isPending ? 'Run AI Agent validation checks' : 'Only pending requests can be validated'}>
+            <Button icon={<FileProtectOutlined />} size="small" loading={reqState.validating} disabled={record.eventType === 'case' || !isPending || reqState.validating} onClick={(e) => { e.stopPropagation(); validateSingleRequest(record); }} style={{ borderRadius: 6, background: (record.eventType === 'case' || isValidatedLocally) ? '#f6ffed' : undefined, borderColor: (record.eventType === 'case' || isValidatedLocally) ? '#b7eb8f' : undefined, color: (record.eventType === 'case' || isValidatedLocally) ? '#52c41a' : undefined }}>{record.eventType === 'case' || isValidatedLocally ? 'Validated' : 'Validate'}</Button>
           </Tooltip>
-          {/* Show Deploy button */}
-          <Dropdown menu={deployMenuItems} trigger={['click']} disabled={isDeployDisabled}>
-            <Tooltip title={isDeployDisabled ? 'Validate first' : 'Deploy to target system'}>
-              <Button type="primary" icon={<RocketOutlined />} size="small" loading={reqState.sending} disabled={isDeployDisabled} onClick={(e) => e.stopPropagation()} style={{ borderRadius: 6 }}>Deploy <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} /></Button>
-            </Tooltip>
-          </Dropdown>
+          {/* Deploy to Salesforce button */}
+          <Tooltip title={isDeployDisabled ? 'Validate first' : 'Deploy to Salesforce'}>
+            <Button type="primary" icon={<SendOutlined />} size="small" loading={reqState.sending} disabled={isDeployDisabled} onClick={(e) => { e.stopPropagation(); record.eventType === 'case' ? handleSendToSAP(record) : deployToSalesforce(record); }} style={{ borderRadius: 6 }}>Salesforce</Button>
+          </Tooltip>
         </Space>
       );
     }}
@@ -474,11 +436,6 @@ export default function Runtime() {
     const accountData = record.originalData;
     const reqState = requestStates[record.id] || {};
     const validationResult = reqState.validationResult;
-    const sendResult = reqState.sendResult;
-    const ticketId = sendResult?.ticket_number || accountData.servicenow_ticket_id;
-    const ticketStatus = reqState.ticketStatus?.status || accountData.servicenow_status;
-    const isApproved = ticketStatus === 'approved' || ticketStatus === 'APPROVED';
-    const isRejected = ticketStatus === 'rejected' || ticketStatus === 'REJECTED';
     return (
       <div style={{ padding: '12px 24px', background: '#fafafa' }}>
         <Space style={{ marginBottom: 16 }}>
@@ -488,11 +445,11 @@ export default function Runtime() {
           {accountData.created_account_id && <Tag color="green" icon={<CheckCircleOutlined />} style={{ borderRadius: 8 }}>Account #{accountData.created_account_id}</Tag>}
         </Space>
         <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-          <Card size="small" title={<Space><FileProtectOutlined /> Validation Status</Space>} style={{ flex: 1, borderRadius: 8, borderColor: validationResult?.valid ? '#b7eb8f' : validationResult ? '#ffa39e' : '#d9d9d9' }}>
-            {!validationResult ? <Text type="secondary">Not validated yet. Click "Validate" button.</Text> : validationResult.valid ? <Alert type="success" showIcon message="Validation Passed" description="Ready to send to ServiceNow." style={{ borderRadius: 6 }} /> : <Alert type="error" showIcon message="Validation Failed" description={<div>{validationResult.errors?.map((err, i) => <div key={i} style={{ color: '#ff4d4f', fontSize: 12 }}><WarningOutlined style={{ marginRight: 4 }} /> {err}</div>)}</div>} style={{ borderRadius: 6 }} />}
+          <Card size="small" title={<Space><FileProtectOutlined /> AI Agent Validation</Space>} style={{ flex: 1, borderRadius: 8, borderColor: validationResult?.valid ? '#b7eb8f' : validationResult ? '#ffa39e' : '#d9d9d9' }}>
+            {!validationResult ? <Text type="secondary">Not validated yet. Click "Validate" to run AI Agent checks.</Text> : validationResult.valid ? <Alert type="success" showIcon message="All Checks Passed" description="Validation passed. Click Deploy to send to Salesforce." style={{ borderRadius: 6 }} /> : <Alert type="error" showIcon message="Validation Failed" description={<div>{validationResult.errors?.map((err, i) => <div key={i} style={{ color: '#ff4d4f', fontSize: 12 }}><WarningOutlined style={{ marginRight: 4 }} /> {err}</div>)}</div>} style={{ borderRadius: 6 }} />}
           </Card>
-          <Card size="small" title={<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><Space><SendOutlined /> ServiceNow Status</Space>{ticketId && <Button size="small" icon={<SyncOutlined spin={reqState.checkingStatus} />} loading={reqState.checkingStatus} onClick={(e) => { e.stopPropagation(); checkServiceNowStatus(record); }} style={{ borderRadius: 6 }}>Check</Button>}</div>} style={{ flex: 1, borderRadius: 8, borderColor: isApproved ? '#b7eb8f' : isRejected ? '#ffa39e' : ticketId ? '#d3adf7' : '#d9d9d9' }}>
-            {!sendResult && !ticketId ? <Text type="secondary">Not sent yet. Validate first, then Deploy.</Text> : isApproved ? <Alert type="success" showIcon icon={<CheckCircleOutlined />} message="APPROVED" description={<div><div style={{ marginBottom: 8 }}>ServiceNow Ticket: <Tag color="purple" style={{ borderRadius: 8 }}>{ticketId}</Tag></div><Tag color="green" icon={<CheckCircleOutlined />} style={{ borderRadius: 8, fontWeight: 600 }}>Approved</Tag></div>} style={{ borderRadius: 6, background: '#f6ffed', borderColor: '#b7eb8f' }} /> : isRejected ? <Alert type="error" showIcon icon={<CloseCircleOutlined />} message="REJECTED" description={<div><div style={{ marginBottom: 8 }}>ServiceNow Ticket: <Tag color="purple" style={{ borderRadius: 8 }}>{ticketId}</Tag></div><Tag color="red" icon={<CloseCircleOutlined />} style={{ borderRadius: 8, fontWeight: 600 }}>Rejected</Tag></div>} style={{ borderRadius: 6, background: '#fff1f0', borderColor: '#ffa39e' }} /> : ticketId ? <Alert type="info" showIcon icon={<ClockCircleOutlined />} message="Awaiting Approval" description={<div><div style={{ marginBottom: 8 }}>ServiceNow Ticket: <Tag color="purple" style={{ borderRadius: 8 }}>{ticketId}</Tag></div><Tag color="orange" icon={<ClockCircleOutlined />} style={{ borderRadius: 8 }}>Pending Approval</Tag></div>} style={{ borderRadius: 6 }} /> : <Alert type="error" showIcon message="Failed to Send" description={sendResult?.error || 'Unknown error'} style={{ borderRadius: 6 }} />}
+          <Card size="small" title={<Space><SendOutlined /> Deploy Status</Space>} style={{ flex: 1, borderRadius: 8, borderColor: reqState.sent ? '#b7eb8f' : '#d9d9d9' }}>
+            {reqState.sent ? <Alert type="success" showIcon icon={<CheckCircleOutlined />} message="Deployed to Salesforce" description="Request has been deployed. Approve or reject in Salesforce Requests tab." style={{ borderRadius: 6, background: '#f6ffed', borderColor: '#b7eb8f' }} /> : <Text type="secondary">Validate first, then click Deploy to send to Salesforce for approval.</Text>}
           </Card>
         </div>
         {accountData.integration_status === 'FAILED' && accountData.integration_error && <Alert type="error" showIcon message="Previous Integration Failed" description={accountData.integration_error} style={{ marginBottom: 16, borderRadius: 8 }} />}
@@ -511,10 +468,10 @@ export default function Runtime() {
     <div className="animate-fade-in">
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div><h2 style={{ marginBottom: 4, color: '#262626' }}>Runtime Manager</h2><p style={{ color: '#8c8c8c', margin: 0 }}>Execution mode - Send data to SAP and ServiceNow, validate and process requests</p></div>
+          <div><h2 style={{ marginBottom: 4, color: '#262626' }}>Runtime Manager</h2><p style={{ color: '#8c8c8c', margin: 0 }}>Execution mode - Manually validate and deploy platform events</p></div>
         </div>
       </div>
-      <Alert message="Execution Mode - Platform Events" description={<span>Send Platform Events to SAP and ServiceNow. For <strong>Case_Update__e</strong>, click Deploy. For <strong>Account_Creation__e</strong>, validate first, then deploy to ServiceNow. For <strong>Password_Reset_e</strong>, send directly to SAP for processing.</span>} type="info" showIcon icon={<ThunderboltOutlined />} style={{ marginBottom: 16, borderRadius: 8 }} />
+      <Alert message="Execution Mode - Platform Events" description={<span>Manage Platform Events manually. For <strong>Account_Creation__e</strong>, click Validate to run AI Agent checks, then Deploy to Salesforce. For <strong>Case_Update__e</strong>, click Deploy. For <strong>Password_Reset_e</strong>, send to SAP for processing.</span>} type="info" showIcon icon={<ThunderboltOutlined />} style={{ marginBottom: 16, borderRadius: 8 }} />
       {error && <Alert message="Connection Error" description={error} type="error" showIcon style={{ marginBottom: 16, borderRadius: 8 }} action={<Button size="small" onClick={fetchAllPlatformEvents}>Retry</Button>} />}
       <Card title={<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><Space><span style={{ fontWeight: 600, fontSize: 16 }}>Platform Events</span><Tag color="blue" style={{ borderRadius: 12 }}>{casesCount} Cases</Tag><Tag color="purple" style={{ borderRadius: 12 }}>{accountsCount} Accounts</Tag><Tag color="orange" style={{ borderRadius: 12 }}>{passwordResetCount} Password Reset</Tag>{(pendingAccountsCount > 0 || pendingPasswordResetCount > 0) && <Tag color="gold" style={{ borderRadius: 12 }}>{pendingAccountsCount + pendingPasswordResetCount} Pending</Tag>}<Tag color={platformEvents.length > 0 ? 'success' : 'default'} style={{ borderRadius: 12 }}>{loading ? 'Loading...' : `${platformEvents.length} Total`}</Tag></Space><Space><Button icon={<ReloadOutlined />} onClick={fetchAllPlatformEvents} loading={loading} type="primary" style={{ borderRadius: 8 }}>Refresh</Button></Space></div>} className="animate-fade-in-up" style={{ borderRadius: 12 }}>
         {loading ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}><Spin size="large" /><span style={{ marginLeft: 16 }}>Loading Salesforce Platform Events...</span></div> : platformEvents.length > 0 ? (
@@ -537,7 +494,7 @@ export default function Runtime() {
       <Modal title={<Space><CloudUploadOutlined style={{ color: '#81B5A1' }} /><span>Send Ticket to ServiceNow</span></Space>} open={snowModal.visible} onCancel={() => { setSnowModal({ visible: false, caseData: null, loading: false }); setSnowResult(null); setSnowPreview({ ticket: null, approval: null }); }} width={900} footer={[<Button key="cancel" onClick={() => setSnowModal({ visible: false, caseData: null, loading: false })}>Cancel</Button>, <Button key="send" style={{ background: '#81B5A1', borderColor: '#81B5A1' }} type="primary" icon={<SendOutlined />} loading={snowModal.loading} onClick={executeSendTicketToServiceNow} disabled={snowResult?.ticket?.success}>{snowResult?.ticket?.success ? 'Sent Successfully' : 'Send Ticket'}</Button>]}>
         {snowModal.caseData && (
           <Tabs defaultActiveKey="ticket-preview" items={[
-            { key: 'ticket-preview', label: 'Ticket Preview', children: (<><div style={{ marginBottom: 16 }}><Text strong>Target: </Text><Text code>POST http://207.180.217.117:4780/api/tickets</Text></div><div style={{ marginBottom: 16 }}><Text strong>Source Case: </Text><Tag color="blue">{snowModal.caseData.id}</Tag><Text>{snowModal.caseData.subject}</Text></div>{snowModal.loading ? <div style={{ textAlign: 'center', padding: 40 }}><Spin /> Generating ticket preview...</div> : snowPreview.ticket ? <pre style={{ background: '#1e1e1e', color: '#d4d4d4', padding: 16, borderRadius: 8, overflow: 'auto', maxHeight: 350, fontSize: 12, fontFamily: 'Monaco, Menlo, monospace' }}>{JSON.stringify(snowPreview.ticket, null, 2)}</pre> : <Text type="secondary">Preview not available</Text>}</>) },
+            { key: 'ticket-preview', label: 'Ticket Preview', children: (<><div style={{ marginBottom: 16 }}><Text strong>Target: </Text><Text code>POST http://localhost:4780/api/tickets</Text></div><div style={{ marginBottom: 16 }}><Text strong>Source Case: </Text><Tag color="blue">{snowModal.caseData.id}</Tag><Text>{snowModal.caseData.subject}</Text></div>{snowModal.loading ? <div style={{ textAlign: 'center', padding: 40 }}><Spin /> Generating ticket preview...</div> : snowPreview.ticket ? <pre style={{ background: '#1e1e1e', color: '#d4d4d4', padding: 16, borderRadius: 8, overflow: 'auto', maxHeight: 350, fontSize: 12, fontFamily: 'Monaco, Menlo, monospace' }}>{JSON.stringify(snowPreview.ticket, null, 2)}</pre> : <Text type="secondary">Preview not available</Text>}</>) },
             { key: 'source', label: 'Source Data', children: <pre style={{ background: '#f6f8fa', padding: 16, borderRadius: 8, overflow: 'auto', maxHeight: 400, fontSize: 12 }}>{JSON.stringify(snowModal.caseData, null, 2)}</pre> },
             ...(snowResult ? [{ key: 'response', label: 'ServiceNow Response', children: (<><div style={{ marginBottom: 16 }}><Text strong style={{ fontSize: 14 }}>Ticket Result:</Text><Alert message={snowResult.ticket?.success ? 'Ticket Created' : 'Ticket Failed'} description={snowResult.ticket?.success ? `Ticket ${snowResult.ticket.ticket_number || ''} created` : (snowResult.ticket?.error || 'Failed')} type={snowResult.ticket?.success ? 'success' : 'error'} showIcon style={{ marginTop: 8 }} /></div></>) }] : [])
           ]} />
@@ -551,6 +508,52 @@ export default function Runtime() {
             { key: 'source', label: 'Source Ticket Data', children: <pre style={{ background: '#f6f8fa', padding: 16, borderRadius: 8, overflow: 'auto', maxHeight: 400, fontSize: 12 }}>{JSON.stringify(passwordResetModal.ticketData, null, 2)}</pre> },
             ...(passwordResetResult ? [{ key: 'response', label: 'SAP Response', children: (<><Alert message={passwordResetResult.success ? 'Success' : 'Error'} description={passwordResetResult.success ? 'Password reset request sent to SAP IDM successfully' : passwordResetResult.error} type={passwordResetResult.success ? 'success' : 'error'} showIcon style={{ marginBottom: 16 }} />{passwordResetResult.sap_response && <><Text strong>SAP Response:</Text><pre style={{ background: '#f6f8fa', padding: 16, borderRadius: 8, overflow: 'auto', maxHeight: 300, fontSize: 12, marginTop: 8 }}>{JSON.stringify(passwordResetResult.sap_response, null, 2)}</pre></>}</>) }] : [])
           ]} /></>)}
+      </Modal>
+
+      <Modal
+        title={<Space><RobotOutlined style={{ color: '#52c41a', fontSize: 18 }} /><span style={{ color: '#52c41a', fontWeight: 600, fontSize: 16 }}>AI Agent Validation Result</span></Space>}
+        open={validationModal.visible}
+        onCancel={() => setValidationModal({ visible: false, result: null })}
+        footer={[<Button key="close" onClick={() => setValidationModal({ visible: false, result: null })}>Close</Button>]}
+        width={600}
+      >
+        {validationModal.result && (
+          <div>
+            <Alert
+              message={<span style={{ fontWeight: 600 }}>{validationModal.result.valid ? 'Validation Passed' : 'Validation Issues Found'}</span>}
+              description={validationModal.result.valid ? 'All checks passed. Use the Deploy dropdown and select Salesforce to send the validation result.' : 'Some checks failed. Please review the errors below.'}
+              type={validationModal.result.valid ? 'success' : 'warning'}
+              showIcon
+              style={{ marginBottom: 20, borderRadius: 8 }}
+            />
+            <Card size="small" style={{ marginBottom: 16, borderRadius: 8 }} title={<Space><LinkOutlined style={{ color: '#722ed1' }} /><span style={{ fontWeight: 600 }}>AI Agent Response</span></Space>}>
+              <Text style={{ color: '#722ed1', fontSize: 14 }}>
+                Validation passed for account '{validationModal.result.account_name || 'Unknown'}' with {(validationModal.result.errors || []).length} error(s) and {(validationModal.result.warnings || []).length} warning(s)
+              </Text>
+            </Card>
+            <Card size="small" style={{ borderRadius: 8 }} title={<span style={{ fontWeight: 600 }}>Checks Performed</span>}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {(validationModal.result.checks_performed || []).map((check, idx) => (
+                  <Tag key={idx} icon={<CheckCircleOutlined />} style={{ borderRadius: 16, padding: '4px 12px', fontSize: 13, color: '#52c41a', borderColor: '#52c41a', background: '#fff' }}>{check}</Tag>
+                ))}
+              </div>
+              {validationModal.result.errors && validationModal.result.errors.length > 0 && (
+                <div style={{ marginTop: 12 }}>
+                  {validationModal.result.errors.map((err, idx) => (
+                    <Tag key={idx} icon={<CloseCircleOutlined />} color="error" style={{ borderRadius: 16, padding: '4px 12px', fontSize: 13 }}>{err}</Tag>
+                  ))}
+                </div>
+              )}
+              {validationModal.result.warnings && validationModal.result.warnings.length > 0 && (
+                <div style={{ marginTop: 12 }}>
+                  {validationModal.result.warnings.map((warn, idx) => (
+                    <Tag key={idx} icon={<ExclamationCircleOutlined />} color="warning" style={{ borderRadius: 16, padding: '4px 12px', fontSize: 13 }}>{warn}</Tag>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
       </Modal>
     </div>
   );

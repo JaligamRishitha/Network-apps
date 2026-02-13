@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from typing import Dict, List, Optional
 import asyncio
 import logging
+import os
 from mistral_agent_mcp_integration import MCPConnector, TicketResolver
 
 logging.basicConfig(level=logging.INFO)
@@ -58,7 +59,7 @@ async def startup_event():
     global mcp_connector, ticket_resolver
 
     logger.info("Initializing MCP connection...")
-    mcp_connector = MCPConnector("/home/pradeep1a/Network-apps/mcp_unified.py")
+    mcp_connector = MCPConnector(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mcp_unified.py"))
     await mcp_connector.connect()
 
     ticket_resolver = TicketResolver(mcp_connector)

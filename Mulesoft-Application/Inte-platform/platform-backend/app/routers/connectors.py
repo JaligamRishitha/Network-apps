@@ -234,12 +234,11 @@ async def test_connector(connector_id: int, db: Session = Depends(get_db), curre
 
     try:
         # Check if this connector uses MCP server
-        mcp_server_url = config.get("mcp_server_url")
-        server_url = config.get("server_url", "").rstrip("/")
+        mcp_server_url = (config.get("mcp_server_url") or "").strip().rstrip("/") or None
+        server_url = (config.get("server_url") or "").strip().rstrip("/")
 
         if mcp_server_url:
             # Test MCP server connection
-            mcp_server_url = mcp_server_url.rstrip("/")
             async with httpx.AsyncClient(timeout=30, verify=False) as client:
                 # Try to list tools to verify MCP server is working
                 response = await client.get(f"{mcp_server_url}/tools")

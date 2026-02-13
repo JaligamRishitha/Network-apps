@@ -4,9 +4,9 @@ COPY package.json .
 RUN npm install
 COPY . .
 
-# Create .env file for React to pick up (connect to remote MuleSoft backend)
-RUN echo "REACT_APP_API_URL=http://207.180.217.117:4797/api" > .env && \
-    echo "REACT_APP_BACKEND_URL=http://207.180.217.117:4797/api" >> .env
+# Create .env file for React to pick up (connect to local MuleSoft backend)
+RUN echo "REACT_APP_API_URL=http://localhost:4797/api" > .env && \
+    echo "REACT_APP_BACKEND_URL=http://localhost:4797/api" >> .env
 
 EXPOSE 3000
 CMD ["npm", "start"]

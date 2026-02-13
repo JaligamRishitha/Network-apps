@@ -18,7 +18,7 @@ def seed_database():
         return
     
     # Create Users
-    admin = User(email="admin@mulesoft.io", hashed_password=get_password_hash("admin123"), full_name="Admin User", role=UserRole.ADMIN)
+    admin = User(email="admin@mulesoft.io", hashed_password=get_password_hash("admin123"), full_name="Chris Johnson", role=UserRole.ADMIN)
     dev = User(email="developer@mulesoft.io", hashed_password=get_password_hash("dev123"), full_name="John Developer", role=UserRole.DEVELOPER)
     db.add_all([admin, dev])
     db.commit()

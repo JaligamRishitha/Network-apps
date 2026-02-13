@@ -8,6 +8,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from typing import Dict, List, Optional
 import asyncio
+import os
 import json
 import logging
 
@@ -33,10 +34,11 @@ class MCPConnector:
         """Connect to MCP server"""
         logger.info(f"Connecting to MCP server: {self.mcp_server_path}")
 
+        project_dir = os.path.dirname(os.path.abspath(__file__))
         server_params = StdioServerParameters(
-            command="python3",
+            command="python",
             args=[self.mcp_server_path],
-            env={"PYTHONPATH": "/home/pradeep1a/Network-apps"}
+            env={"PYTHONPATH": project_dir}
         )
 
         # Create client connection
@@ -474,7 +476,7 @@ async def main():
     """
 
     # Initialize MCP connector
-    mcp = MCPConnector("/home/pradeep1a/Network-apps/mcp_unified.py")
+    mcp = MCPConnector(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mcp_unified.py"))
 
     try:
         # Connect to MCP server

@@ -49,6 +49,7 @@ export const accountsAPI = {
   changeOwner: (id, ownerId) => api.put(`/api/accounts/${id}/change-owner?owner_id=${ownerId}`),
   listRequests: (params) => api.get('/api/accounts/requests', { params }),
   approveRequest: (requestId) => api.post(`/api/accounts/requests/${requestId}/approve`),
+  rejectRequest: (requestId) => api.post(`/api/accounts/requests/${requestId}/reject`),
   mulesoftAccept: (requestId) => api.post(`/api/accounts/requests/${requestId}/mulesoft-accept`),
   deleteRequest: (requestId) => api.delete(`/api/accounts/requests/${requestId}`),
 };

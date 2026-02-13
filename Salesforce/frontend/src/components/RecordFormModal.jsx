@@ -54,6 +54,7 @@ const formConfigs = {
         fields: [
           { name: 'name', label: 'Account Name', type: 'text', required: true },
           { name: 'phone', label: 'Phone', type: 'tel' },
+          { name: 'email', label: 'Email', type: 'email', required: true },
           { name: 'website', label: 'Website', type: 'url' },
           { name: 'industry', label: 'Industry', type: 'select', options: industryOptions },
         ],
@@ -61,11 +62,9 @@ const formConfigs = {
       {
         title: 'Address',
         fields: [
-          { name: 'billing_street', label: 'Billing Street', type: 'textarea', rows: 2 },
-          { name: 'billing_city', label: 'Billing City', type: 'text' },
-          { name: 'billing_state', label: 'Billing State/Province', type: 'select', options: stateOptions },
-          { name: 'billing_postal_code', label: 'Billing Zip/Postal Code', type: 'text' },
-          { name: 'billing_country', label: 'Billing Country', type: 'select', options: countryOptions },
+          { name: 'street', label: 'Street', type: 'textarea', rows: 2 },
+          { name: 'zip_code', label: 'Zip/Postal Code', type: 'text' },
+          { name: 'country', label: 'Country', type: 'select', options: countryOptions },
         ],
       },
       {

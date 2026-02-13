@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { accountsAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -7,6 +7,7 @@ export default function AccountRequestsStatus() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedRow, setExpandedRow] = useState(null);
+  const [actingId, setActingId] = useState(null);
 
   // Helper to deduplicate arrays by ID
   const deduplicateById = (items) => {
@@ -34,6 +35,34 @@ export default function AccountRequestsStatus() {
   useEffect(() => {
     loadRequests();
   }, []);
+
+  const handleApprove = async (requestId) => {
+    setActingId(requestId);
+    try {
+      await accountsAPI.approveRequest(requestId);
+      toast.success('Request approved — account created');
+      await loadRequests();
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to approve request';
+      toast.error(typeof message === 'string' ? message : 'Failed to approve request');
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  const handleReject = async (requestId) => {
+    setActingId(requestId);
+    try {
+      await accountsAPI.rejectRequest(requestId);
+      toast.success('Request rejected');
+      await loadRequests();
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to reject request';
+      toast.error(typeof message === 'string' ? message : 'Failed to reject request');
+    } finally {
+      setActingId(null);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -99,6 +128,7 @@ export default function AccountRequestsStatus() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Integration Status</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MuleSoft ID</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -146,10 +176,36 @@ export default function AccountRequestsStatus() {
                         <td className="px-4 py-3 text-sm text-gray-500">
                           {item.created_at ? new Date(item.created_at).toLocaleString() : '-'}
                         </td>
+                        <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                          {item.status === 'PENDING' ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleApprove(item.id)}
+                                className="inline-flex items-center gap-1 rounded-md bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                                disabled={actingId === item.id}
+                              >
+                                <CheckCircleIcon className="w-4 h-4" />
+                                {actingId === item.id ? 'Processing...' : 'Approve'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleReject(item.id)}
+                                className="inline-flex items-center gap-1 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                                disabled={actingId === item.id}
+                              >
+                                <XCircleIcon className="w-4 h-4" />
+                                {actingId === item.id ? 'Processing...' : 'Reject'}
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">{item.status}</span>
+                          )}
+                        </td>
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan="6" className="px-4 py-4 bg-gray-50">
+                          <td colSpan="7" className="px-4 py-4 bg-gray-50">
                             <div className="grid grid-cols-2 gap-4 text-sm">
                               <div>
                                 <span className="font-medium text-gray-700">Correlation ID:</span>

@@ -46,6 +46,7 @@ const PasswordResetForm = () => {
 
   const [formData, setFormData] = useState({
     username: '',
+    application: '',
     email: '',
     reason: '',
     contactNumber: '',
@@ -113,6 +114,7 @@ const PasswordResetForm = () => {
           description: `Password Reset Request
 
 Username: ${formData.username}
+Application: ${formData.application || 'Not specified'}
 Requested By: ${user?.full_name || 'Self-service User'}
 Email: ${formData.email || 'Not provided'}
 Contact Number: ${formData.contactNumber}
@@ -131,6 +133,7 @@ ${formData.reason}`,
           auto_assign: true,
           metadata: {
             sap_username: formData.username,
+            application: formData.application,
             requester_email: formData.email,
             contact_number: formData.contactNumber,
             preferred_contact: formData.preferredContact,
@@ -246,6 +249,30 @@ ${formData.reason}`,
                     helperText={errors.username || 'Enter your username'}
                     placeholder="e.g., jsmith"
                   />
+                </Grid>
+
+                {/* Application */}
+                <Grid item xs={12}>
+                  <FormControl fullWidth sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&.Mui-focused fieldset': { borderColor: '#FF8C42' },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': { color: '#FF8C42' },
+                  }}>
+                    <InputLabel>Application</InputLabel>
+                    <Select
+                      value={formData.application}
+                      label="Application"
+                      onChange={(e) => handleInputChange('application', e.target.value)}
+                    >
+                      <MenuItem value="Power On">Power On</MenuItem>
+                      <MenuItem value="MAVIS">MAVIS</MenuItem>
+                      <MenuItem value="MPRS">MPRS</MenuItem>
+                      <MenuItem value="IMIB">IMIB</MenuItem>
+                      <MenuItem value="CQS">CQS</MenuItem>
+                      <MenuItem value="CIO">CIO</MenuItem>
+                    </Select>
+                  </FormControl>
                 </Grid>
 
                 {/* Email */}

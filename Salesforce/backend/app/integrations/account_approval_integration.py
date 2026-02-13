@@ -33,6 +33,9 @@ MULESOFT_TIMEOUT_SECONDS = float(os.getenv("MULESOFT_TIMEOUT_SECONDS", "30"))
 # Salesforce callback URL for MuleSoft to call back
 SALESFORCE_CALLBACK_URL = os.getenv("SALESFORCE_CALLBACK_URL", "http://207.180.217.117:4799")
 
+# ServiceNow API Configuration
+SERVICENOW_API_URL = os.getenv("SERVICENOW_BASE_URL", "http://servicenow-backend:4780")
+
 
 def _new_external_id(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex[:12]}"
@@ -71,20 +74,84 @@ async def _get_mulesoft_auth_token(client: httpx.AsyncClient) -> Optional[str]:
     return None
 
 
+async def _create_servicenow_ticket(request: AccountCreationRequest) -> Optional[str]:
+    """Create a ServiceNow ticket for the account creation request.
+    Returns the ticket ID on success, None on failure.
+    This is supplementary - failures are logged but don't block the request."""
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=15) as client:
+            # Authenticate with ServiceNow
+            auth_response = await client.post(
+                f"{SERVICENOW_API_URL}/token",
+                data={"username": "admin@company.com", "password": "admin123"},
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+            if auth_response.status_code != 200:
+                logger.warning(f"ServiceNow auth failed: HTTP {auth_response.status_code}")
+                return None
+
+            sn_token = auth_response.json().get("access_token", "")
+
+            # Create ticket
+            ticket_payload = {
+                "title": f"Account Creation Approval - {request.name}",
+                "description": (
+                    f"New account creation request from Salesforce.\n\n"
+                    f"Account Name: {request.name}\n"
+                    f"Correlation ID: {request.correlation_id}\n"
+                    f"Salesforce Request ID: {request.id}\n"
+                    f"Requested By: User ID {request.requested_by_id}\n"
+                ),
+                "ticket_type": "service_request",
+                "priority": "medium",
+                "category": "Account Management",
+                "subcategory": "New Account Creation",
+                "urgency": "medium",
+            }
+            ticket_response = await client.post(
+                f"{SERVICENOW_API_URL}/tickets/",
+                headers={
+                    "Authorization": f"Bearer {sn_token}",
+                    "Content-Type": "application/json",
+                },
+                json=ticket_payload,
+            )
+            if ticket_response.status_code in (200, 201):
+                ticket_data = ticket_response.json()
+                ticket_id = ticket_data.get("ticket_number") or f"TKT{ticket_data.get('id')}"
+                logger.info(f"ServiceNow ticket {ticket_id} created for request {request.id}")
+                return ticket_id
+            else:
+                logger.warning(f"ServiceNow ticket creation failed: HTTP {ticket_response.status_code}")
+                return None
+    except Exception as e:
+        logger.warning(f"Failed to create ServiceNow ticket for request {request.id}: {e}")
+        return None
+
+
 async def _set_pending(
     db: Session,
     request: AccountCreationRequest,
 ) -> AccountCreationRequest:
     """
     Set the account creation request to PENDING.
+    Also creates a ServiceNow ticket simultaneously.
     The user will manually validate and deploy from MuleSoft.
     MuleSoft calls back to Salesforce to update status:
       validate-single-request  -> VALIDATED
-      send-single-to-servicenow -> COMPLETED
+      deploy-to-salesforce     -> COMPLETED
     """
     logger.info(f"Request {request.id} created with status PENDING")
+
+    # Create ServiceNow ticket (supplementary - don't block on failure)
+    sn_ticket_id = await _create_servicenow_ticket(request)
+
+    update_kwargs = {"integration_status": "PENDING"}
+    if sn_ticket_id:
+        update_kwargs["servicenow_ticket_id"] = sn_ticket_id
+
     return crud.update_account_request_integration(
-        db, request, integration_status="PENDING",
+        db, request, **update_kwargs,
     )
 
 

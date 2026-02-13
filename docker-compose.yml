@@ -169,6 +169,7 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres-servicenow:5432/servicenow_db
       MULESOFT_URL: http://mulesoft-backend:4797
       MULESOFT_BASE_URL: http://mulesoft-backend:4797
+      ORCHESTRATOR_URL: http://host.docker.internal:2486
     depends_on:
       postgres-servicenow:
         condition: service_healthy
@@ -200,8 +201,8 @@ services:
       context: ./serviceNow/frontend
       dockerfile: Dockerfile
       args:
-        REACT_APP_API_URL: http://207.180.217.117:4780
-        REACT_APP_MULESOFT_URL: http://207.180.217.117:4797
+        REACT_APP_API_URL: http://localhost:4780
+        REACT_APP_MULESOFT_URL: http://localhost:4797
     container_name: servicenow-frontend
     ports:
       - "3003:3000"
@@ -220,7 +221,7 @@ services:
     ports:
       - "2003:2003"
     environment:
-      VITE_API_URL: http://207.180.217.117:4798/api/v1
+      VITE_API_URL: http://localhost:4798/api/v1
     depends_on:
       - sap-backend
     restart: unless-stopped
@@ -233,7 +234,7 @@ services:
       context: ./ClientPortal
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://207.180.217.117:4799
+        VITE_API_URL: http://localhost:4799
     container_name: client-portal
     ports:
       - "2005:80"

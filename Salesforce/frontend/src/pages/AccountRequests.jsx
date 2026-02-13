@@ -1,20 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
-import { CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { useEffect, useState } from 'react';
+import { CheckCircleIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { accountsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-
-function isManager(user) {
-  return user?.role === 'admin' || user?.role === 'manager';
-}
 
 export default function AccountRequests() {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actingId, setActingId] = useState(null);
-
-  const canAccept = useMemo(() => isManager(user), [user]);
 
   const loadRequests = async () => {
     setLoading(true);
@@ -33,15 +27,29 @@ export default function AccountRequests() {
     loadRequests();
   }, []);
 
-  const handleAccept = async (requestId) => {
+  const handleApprove = async (requestId) => {
     setActingId(requestId);
     try {
-      await accountsAPI.mulesoftAccept(requestId);
-      toast.success('Request accepted by MuleSoft');
+      await accountsAPI.approveRequest(requestId);
+      toast.success('Request approved — account created');
       await loadRequests();
     } catch (error) {
-      const message = error.response?.data?.detail || 'Failed to accept request';
-      toast.error(typeof message === 'string' ? message : 'Failed to accept request');
+      const message = error.response?.data?.detail || 'Failed to approve request';
+      toast.error(typeof message === 'string' ? message : 'Failed to approve request');
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  const handleReject = async (requestId) => {
+    setActingId(requestId);
+    try {
+      await accountsAPI.rejectRequest(requestId);
+      toast.success('Request rejected');
+      await loadRequests();
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to reject request';
+      toast.error(typeof message === 'string' ? message : 'Failed to reject request');
     } finally {
       setActingId(null);
     }
@@ -52,7 +60,7 @@ export default function AccountRequests() {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Account Requests</h1>
-          <p className="text-sm text-gray-500">Requests sent to MuleSoft must be accepted before accounts are created.</p>
+          <p className="text-sm text-gray-500">Review account creation requests — approve to create the account or reject to decline.</p>
         </div>
         <button type="button" onClick={loadRequests} className="btn-outline flex items-center gap-2">
           <ArrowPathIcon className="w-4 h-4" />
@@ -77,9 +85,7 @@ export default function AccountRequests() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ServiceNow</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested By</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                  {canAccept && (
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  )}
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -96,20 +102,32 @@ export default function AccountRequests() {
                       <td className="px-4 py-3 text-sm text-gray-500">
                         {item.created_at ? new Date(item.created_at).toLocaleString() : '-'}
                       </td>
-                      {canAccept && (
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleAccept(item.id)}
-                            className="btn-primary inline-flex items-center gap-2"
-                            disabled={!pending || actingId === item.id}
-                            title={pending ? 'Accept in MuleSoft (simulated)' : 'Only pending requests can be accepted'}
-                          >
-                            <CheckCircleIcon className="w-4 h-4" />
-                            {actingId === item.id ? 'Accepting...' : 'Accept'}
-                          </button>
-                        </td>
-                      )}
+                      <td className="px-4 py-3 text-right">
+                        {pending ? (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleApprove(item.id)}
+                              className="inline-flex items-center gap-1 rounded-md bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                              disabled={actingId === item.id}
+                            >
+                              <CheckCircleIcon className="w-4 h-4" />
+                              {actingId === item.id ? 'Processing...' : 'Approve'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleReject(item.id)}
+                              className="inline-flex items-center gap-1 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                              disabled={actingId === item.id}
+                            >
+                              <XCircleIcon className="w-4 h-4" />
+                              {actingId === item.id ? 'Processing...' : 'Reject'}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">{item.status}</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
@@ -121,4 +139,3 @@ export default function AccountRequests() {
     </div>
   );
 }
-

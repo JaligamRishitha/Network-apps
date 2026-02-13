@@ -142,11 +142,11 @@ export default function Connectors() {
 
   // MCP Server configurations
   const mcpServers = {
-    salesforce: { url: 'http://207.180.217.117:8090', name: 'salesforce-crm', description: 'Salesforce CRM MCP Server' },
-    sap: { url: 'http://207.180.217.117:8092', name: 'sap-erp', description: 'SAP ERP MCP Server' },
-    servicenow: { url: 'http://207.180.217.117:8093', name: 'servicenow', description: 'ServiceNow ITSM MCP Server' },
-    database: { url: 'http://207.180.217.117:8091', name: 'mulesoft-api', description: 'MuleSoft HTTP REST API' },
-    http: { url: 'http://207.180.217.117:8091', name: 'mulesoft-api', description: 'MuleSoft HTTP REST API' }
+    salesforce: { url: 'http://localhost:8090', name: 'salesforce-crm', description: 'Salesforce CRM MCP Server' },
+    sap: { url: 'http://localhost:8092', name: 'sap-erp', description: 'SAP ERP MCP Server' },
+    servicenow: { url: 'http://localhost:8093', name: 'servicenow', description: 'ServiceNow ITSM MCP Server' },
+    database: { url: 'http://localhost:8091', name: 'mulesoft-api', description: 'MuleSoft HTTP REST API' },
+    http: { url: 'http://localhost:8091', name: 'mulesoft-api', description: 'MuleSoft HTTP REST API' }
   };
 
   const defaultConfigSchema = {
@@ -156,11 +156,11 @@ export default function Connectors() {
       label: 'MCP Server',
       required: false,
       options: [
-        'http://207.180.217.117:8090 (Salesforce CRM)',
-        'http://207.180.217.117:8091 (MuleSoft API)',
-        'http://207.180.217.117:8092 (SAP ERP)',
-        'http://207.180.217.117:8093 (ServiceNow)',
-        'http://207.180.217.117:8094 (MuleSoft Integration)'
+        'http://localhost:8090 (Salesforce CRM)',
+        'http://localhost:8091 (MuleSoft API)',
+        'http://localhost:8092 (SAP ERP)',
+        'http://localhost:8093 (ServiceNow)',
+        'http://localhost:8094 (MuleSoft Integration)'
       ],
       placeholder: 'Select MCP Server'
     },
@@ -193,11 +193,11 @@ export default function Connectors() {
 
   // MCP URL to display format mapping
   const mcpUrlToDisplay = {
-    'http://207.180.217.117:8090': 'http://207.180.217.117:8090 (Salesforce CRM)',
-    'http://207.180.217.117:8091': 'http://207.180.217.117:8091 (MuleSoft API)',
-    'http://207.180.217.117:8092': 'http://207.180.217.117:8092 (SAP ERP)',
-    'http://207.180.217.117:8093': 'http://207.180.217.117:8093 (ServiceNow)',
-    'http://207.180.217.117:8094': 'http://207.180.217.117:8094 (MuleSoft Integration)'
+    'http://localhost:8090': 'http://localhost:8090 (Salesforce CRM)',
+    'http://localhost:8091': 'http://localhost:8091 (MuleSoft API)',
+    'http://localhost:8092': 'http://localhost:8092 (SAP ERP)',
+    'http://localhost:8093': 'http://localhost:8093 (ServiceNow)',
+    'http://localhost:8094': 'http://localhost:8094 (MuleSoft Integration)'
   };
 
   const handleEdit = (record) => {
@@ -214,11 +214,11 @@ export default function Connectors() {
 
   // MCP server name mapping
   const mcpServerNames = {
-    'http://207.180.217.117:8090': 'salesforce-crm',
-    'http://207.180.217.117:8091': 'mulesoft-api',
-    'http://207.180.217.117:8092': 'sap-erp',
-    'http://207.180.217.117:8093': 'servicenow',
-    'http://207.180.217.117:8094': 'mulesoft-integration'
+    'http://localhost:8090': 'salesforce-crm',
+    'http://localhost:8091': 'mulesoft-api',
+    'http://localhost:8092': 'sap-erp',
+    'http://localhost:8093': 'servicenow',
+    'http://localhost:8094': 'mulesoft-integration'
   };
 
   const handleSave = async () => {

@@ -21,11 +21,15 @@ def account_to_response(account, request: Optional[AccountCreationRequest] = Non
     return schemas.AccountResponse(
         id=account.id,
         name=account.name,
+        email=account.email,
         phone=account.phone,
         website=account.website,
         industry=account.industry,
         description=account.description,
         billing_address=account.billing_address,
+        street=account.street,
+        zip_code=account.zip_code,
+        country=account.country,
         owner_id=account.owner_id,
         created_at=account.created_at,
         updated_at=account.updated_at,
@@ -426,9 +430,6 @@ async def reject_account_request(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if not is_manager(current_user):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Manager approval required")
-
     request = crud.get_account_request(db, request_id)
     if not request:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account request not found")

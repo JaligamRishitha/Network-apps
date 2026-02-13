@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-// Use environment variable or fallback to remote MCP server
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://207.180.217.117:8090/api';
+// Use environment variable or fallback to local MCP server
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4797/api';
 // Backend server URL
-const BACKEND_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://207.180.217.117:4797/api';
+const BACKEND_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4797/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

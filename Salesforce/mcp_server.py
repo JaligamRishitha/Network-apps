@@ -11,6 +11,7 @@ import json
 import httpx
 import asyncio
 import os
+import re
 from typing import Any, Optional
 from mcp.server import Server
 from mcp.types import TextContent, Tool
@@ -137,12 +138,12 @@ async def get_account(account_id: int):
     return [TextContent(type="text", text=json.dumps(result))]
 
 
-async def create_account(name: str, industry: str = "", revenue: float = None, employees: int = None):
-    data = {"name": name, "industry": industry}
-    if revenue:
-        data["revenue"] = revenue
-    if employees:
-        data["employees"] = employees
+async def create_account(name: str, email: str, industry: str = "", billing_address: str = "", phone: str = ""):
+    data = {"name": name, "email": email, "industry": industry}
+    if billing_address:
+        data["billing_address"] = billing_address
+    if phone:
+        data["phone"] = phone
     result = await api_call("POST", "/api/accounts", data)
     return [TextContent(type="text", text=json.dumps(result))]
 
@@ -321,6 +322,13 @@ async def validate_account_creation(account_name: str, email: str = "", first_na
         result = {"valid": False, "reason": "missing_required_fields", "missing_fields": ["account_name"], "message": "Missing required field: account_name"}
         return [TextContent(type="text", text=json.dumps(result))]
 
+    # Validate email format if provided
+    if email:
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            result = {"valid": False, "reason": "invalid_email_format", "message": f"Invalid email format: '{email}'. Please provide a valid email address."}
+            return [TextContent(type="text", text=json.dumps(result))]
+
     accounts_result = await api_call("GET", "/api/accounts", params={"search": account_name, "limit": 50})
     if "error" not in accounts_result:
         accounts = accounts_result.get("accounts", accounts_result.get("data", []))
@@ -343,6 +351,125 @@ async def validate_account_creation(account_name: str, email: str = "", first_na
                         return [TextContent(type="text", text=json.dumps(result))]
 
     result = {"valid": True, "reason": "all_checks_passed", "message": "Account creation validation passed - no duplicates found", "validated_fields": {"account_name": account_name, "email": email or "not provided", "first_name": first_name, "last_name": last_name, "phone": phone}}
+    return [TextContent(type="text", text=json.dumps(result))]
+
+
+# --- Email & Address Validation ---
+
+DISPOSABLE_EMAIL_DOMAINS = [
+    "mailinator.com", "guerrillamail.com", "tempmail.com", "throwaway.email",
+    "yopmail.com", "sharklasers.com", "guerrillamailblock.com", "grr.la",
+    "dispostable.com", "trashmail.com", "fakeinbox.com", "mailnesia.com",
+    "maildrop.cc", "discard.email", "temp-mail.org", "getnada.com",
+]
+
+
+async def validate_email_format(email: str):
+    """Validate email format and check for disposable email domains."""
+    email = email.strip()
+    if not email:
+        result = {"valid": False, "message": "Email address is required."}
+        return [TextContent(type="text", text=json.dumps(result))]
+
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, email):
+        result = {"valid": False, "message": f"Invalid email format: '{email}'. Expected format: user@domain.com"}
+        return [TextContent(type="text", text=json.dumps(result))]
+
+    domain = email.split("@")[1].lower()
+    if domain in DISPOSABLE_EMAIL_DOMAINS:
+        result = {"valid": False, "message": f"Disposable email domain '{domain}' is not allowed. Please use a permanent email address."}
+        return [TextContent(type="text", text=json.dumps(result))]
+
+    result = {"valid": True, "message": f"Email '{email}' has a valid format.", "email": email, "domain": domain}
+    return [TextContent(type="text", text=json.dumps(result))]
+
+
+async def validate_address(address: str, address_type: str = "billing"):
+    """Validate that an address contains minimum required components."""
+    address = address.strip()
+    if not address:
+        result = {"valid": False, "message": "Address is required.", "parsed_components": {}}
+        return [TextContent(type="text", text=json.dumps(result))]
+
+    parsed = {
+        "street": None,
+        "city": None,
+        "state": None,
+        "zip_code": None,
+        "country": None,
+    }
+    missing = []
+
+    parts = [p.strip() for p in re.split(r'[,\n]+', address) if p.strip()]
+
+    # Try to extract zip code from any part
+    zip_match = None
+    for part in parts:
+        m = re.search(r'\b(\d{5}(?:-\d{4})?)\b', part)
+        if m:
+            zip_match = m.group(1)
+            break
+
+    if zip_match:
+        parsed["zip_code"] = zip_match
+    else:
+        missing.append("zip_code")
+
+    # Try to extract state (2-letter abbreviation or common state names)
+    state_match = None
+    for part in parts:
+        m = re.search(r'\b([A-Z]{2})\b', part)
+        if m and m.group(1) not in ("PO", "ST", "DR", "RD", "LN", "CT", "AVE", "BLVD"):
+            state_match = m.group(1)
+            break
+
+    if state_match:
+        parsed["state"] = state_match
+    else:
+        missing.append("state")
+
+    # First part is typically the street
+    if len(parts) >= 1:
+        parsed["street"] = parts[0]
+    else:
+        missing.append("street")
+
+    # Second part is typically the city
+    if len(parts) >= 2:
+        # City might be in the second part, before state/zip
+        city_part = parts[1]
+        # Remove state and zip if embedded
+        city_clean = re.sub(r'\b[A-Z]{2}\b', '', city_part)
+        city_clean = re.sub(r'\b\d{5}(?:-\d{4})?\b', '', city_clean).strip().strip(',').strip()
+        if city_clean:
+            parsed["city"] = city_clean
+        else:
+            missing.append("city")
+    else:
+        missing.append("city")
+
+    # Country (optional, check last part)
+    if len(parts) >= 3:
+        last = parts[-1].strip()
+        # If last part looks like a country (not a state/zip)
+        if not re.match(r'^\d{5}', last) and not re.match(r'^[A-Z]{2}$', last):
+            parsed["country"] = last
+
+    if missing:
+        result = {
+            "valid": False,
+            "message": f"Address is missing required components: {', '.join(missing)}. A valid {address_type} address needs at least street, city, state, and zip code.",
+            "parsed_components": parsed,
+            "missing_components": missing,
+        }
+    else:
+        result = {
+            "valid": True,
+            "message": f"Address appears to be a valid {address_type} address with all required components.",
+            "parsed_components": parsed,
+        }
+
     return [TextContent(type="text", text=json.dumps(result))]
 
 
@@ -471,6 +598,8 @@ TOOL_DISPATCH = {
     "get_logs": get_logs,
     "health_check": health_check,
     "validate_account_creation": validate_account_creation,
+    "validate_email_format": validate_email_format,
+    "validate_address": validate_address,
     "sf_validate_client_user": sf_validate_client_user,
     "sf_update_client_password": sf_update_client_password,
     "sf_activate_client_user": sf_activate_client_user,
@@ -553,15 +682,16 @@ async def handle_list_tools():
             "properties": {"account_id": {"type": "integer", "description": "Account ID"}},
             "required": ["account_id"],
         }),
-        Tool(name="create_account", description="Create new account", inputSchema={
+        Tool(name="create_account", description="Create new account (email required)", inputSchema={
             "type": "object",
             "properties": {
                 "name": {"type": "string", "description": "Account name"},
+                "email": {"type": "string", "description": "Account email address (required)"},
                 "industry": {"type": "string", "description": "Industry", "default": ""},
-                "revenue": {"type": "number", "description": "Annual revenue"},
-                "employees": {"type": "integer", "description": "Number of employees"},
+                "billing_address": {"type": "string", "description": "Billing address", "default": ""},
+                "phone": {"type": "string", "description": "Phone number", "default": ""},
             },
-            "required": ["name"],
+            "required": ["name", "email"],
         }),
         Tool(name="update_account", description="Update account fields", inputSchema={
             "type": "object",
@@ -756,6 +886,22 @@ async def handle_list_tools():
                 "phone": {"type": "string", "description": "Contact phone", "default": ""},
             },
             "required": ["account_name"],
+        }),
+        # --- Email & Address Validation ---
+        Tool(name="validate_email_format", description="Validate email format and check for disposable email domains", inputSchema={
+            "type": "object",
+            "properties": {
+                "email": {"type": "string", "description": "Email address to validate"},
+            },
+            "required": ["email"],
+        }),
+        Tool(name="validate_address", description="Validate an address has minimum required components (street, city, state, zip)", inputSchema={
+            "type": "object",
+            "properties": {
+                "address": {"type": "string", "description": "Full address string to validate"},
+                "address_type": {"type": "string", "description": "Type of address: billing, mailing, or shipping", "default": "billing"},
+            },
+            "required": ["address"],
         }),
         # --- Client User Tools ---
         Tool(name="sf_validate_client_user", description="Validate a client user by email. Checks if the email is already registered as an active user. Only email is required. account_name is optional.", inputSchema={

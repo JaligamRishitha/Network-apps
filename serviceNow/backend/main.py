@@ -12,6 +12,7 @@ import os
 import hashlib
 import httpx
 
+from fastapi import BackgroundTasks
 from database import SessionLocal, engine, Base
 from models import User, Incident, ServiceCatalogItem, KnowledgeArticle, Ticket, Approval, IncidentStatus, IncidentPriority, TicketStatus, ApprovalStatus
 from schemas import (
@@ -21,6 +22,47 @@ from schemas import (
     Token
 )
 from servicenow_client import servicenow_client, ServiceNowClient
+import logging
+
+logger = logging.getLogger(__name__)
+
+# ============================================================================
+# ORCHESTRATOR AUTO-FORWARDING
+# ============================================================================
+
+ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://localhost:2486")
+
+async def forward_ticket_to_orchestrator(ticket_number: str, title: str, description: str,
+                                          priority: str, status: str, sys_id: str = "",
+                                          category: str = "", subcategory: str = ""):
+    """
+    Forward a newly created ticket to the Ticket Orchestrator for AI agent processing.
+    Runs as a background task so it doesn't block the API response.
+    """
+    payload = {
+        "sys_id": sys_id or ticket_number,
+        "number": ticket_number,
+        "short_description": title,
+        "description": description or "",
+        "priority": str(priority),
+        "state": status or "2",
+        "assigned_to": "",
+        "category": category or "",
+        "subcategory": subcategory or ""
+    }
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                f"{ORCHESTRATOR_URL}/api/webhook/servicenow",
+                json=payload
+            )
+            if response.status_code == 200:
+                result = response.json()
+                logger.info(f"Forwarded ticket {ticket_number} to orchestrator: {result.get('message', 'OK')}")
+            else:
+                logger.error(f"Orchestrator rejected ticket {ticket_number}: HTTP {response.status_code}")
+    except Exception as e:
+        logger.warning(f"Could not forward ticket {ticket_number} to orchestrator: {e}")
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -227,14 +269,14 @@ def mark_article_helpful(article_id: int, db: Session = Depends(get_db)):
 
 # Ticket Management endpoints
 @app.post("/tickets/", response_model=TicketResponse)
-def create_ticket(ticket: TicketCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def create_ticket(ticket: TicketCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Create a new ticket"""
     import random
     import string
-    
+
     # Generate unique ticket number
     ticket_number = f"TKT{random.randint(100000, 999999)}"
-    
+
     db_ticket = Ticket(
         ticket_number=ticket_number,
         title=ticket.title,
@@ -255,11 +297,11 @@ def create_ticket(ticket: TicketCreate, db: Session = Depends(get_db), current_u
         source_request_id=ticket.source_request_id,
         source_request_type=ticket.source_request_type
     )
-    
+
     db.add(db_ticket)
     db.commit()
     db.refresh(db_ticket)
-    
+
     # Create approval if needed (for service requests over certain cost)
     if ticket.ticket_type == "service_request" and ticket.estimated_cost:
         try:
@@ -277,7 +319,20 @@ def create_ticket(ticket: TicketCreate, db: Session = Depends(get_db), current_u
                     db.commit()
         except:
             pass  # If cost parsing fails, continue without approval
-    
+
+    # Auto-forward to orchestrator for AI agent processing
+    background_tasks.add_task(
+        forward_ticket_to_orchestrator,
+        ticket_number=ticket_number,
+        title=ticket.title,
+        description=ticket.description or "",
+        priority=ticket.priority or "3",
+        status=str(db_ticket.status.value if hasattr(db_ticket.status, 'value') else db_ticket.status),
+        sys_id=str(db_ticket.id),
+        category=ticket.category or "",
+        subcategory=ticket.subcategory or ""
+    )
+
     return db_ticket
 
 @app.get("/tickets/", response_model=list[TicketResponse])
@@ -588,7 +643,7 @@ async def startup_event():
             hashed_password = get_password_hash(admin_password)
             admin_user = User(
                 email="admin@company.com",
-                full_name="System Administrator",
+                full_name="Sally Matthew",
                 role="admin",
                 hashed_password=hashed_password
             )
@@ -1597,6 +1652,7 @@ async def get_tickets_for_mulesoft(
 @app.post("/api/tickets")
 async def create_ticket_from_mulesoft(
     ticket_data: dict,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     """Create ticket from MuleSoft integration"""
@@ -1632,6 +1688,19 @@ async def create_ticket_from_mulesoft(
         db.add(new_ticket)
         db.commit()
         db.refresh(new_ticket)
+
+        # Auto-forward to orchestrator for AI agent processing
+        background_tasks.add_task(
+            forward_ticket_to_orchestrator,
+            ticket_number=ticket_number,
+            title=new_ticket.title,
+            description=new_ticket.description or "",
+            priority=str(raw_priority),
+            status="pending_approval",
+            sys_id=str(new_ticket.id),
+            category=ticket_data.get("category", ""),
+            subcategory=ticket_data.get("subcategory", "")
+        )
 
         return {
             "id": new_ticket.id,
@@ -2284,6 +2353,7 @@ from models import (
 @app.post("/api/tickets/auto-create", response_model=AutoCreateTicketResponse)
 async def auto_create_ticket(
     request: AutoCreateTicketRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     """
@@ -2381,6 +2451,20 @@ async def auto_create_ticket(
                 assigned_to_id=new_ticket.assigned_to_id,
                 assignment_group=assignment_result.get("group_name")
             )
+
+        # Auto-forward to orchestrator for AI agent processing
+        priority_to_number = {"critical": "1", "high": "2", "medium": "3", "low": "4"}
+        background_tasks.add_task(
+            forward_ticket_to_orchestrator,
+            ticket_number=ticket_number,
+            title=request.title,
+            description=request.description or "",
+            priority=priority_to_number.get(priority, "3"),
+            status=new_ticket.status.value if hasattr(new_ticket.status, 'value') else str(new_ticket.status),
+            sys_id=str(new_ticket.id),
+            category=category or "",
+            subcategory=subcategory or ""
+        )
 
         return AutoCreateTicketResponse(
             ticket_id=new_ticket.id,
